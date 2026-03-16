@@ -31,7 +31,7 @@ export default function CalendarPage() {
 
   return (
     <AppShell
-      title="Your visual diary"
+      title="Your meal story"
       subtitle="The month should feel more satisfying every time you log a meal."
       headerTrailing={<Tag active>{ready ? `${entries.length} meals` : "Loading"}</Tag>}
     >
