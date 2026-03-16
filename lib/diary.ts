@@ -1,0 +1,82 @@
+import {
+  getCurrentYearMonth,
+  getYearMonthKey,
+  toLocalDateString
+} from "@/lib/date";
+import type { DiaryStore, MealEntry } from "@/lib/types";
+
+export const STORAGE_KEY = "yumoo.v1";
+
+export function createEmptyStore(guestId = crypto.randomUUID()): DiaryStore {
+  return {
+    version: 1,
+    guestId,
+    entries: []
+  };
+}
+
+export function parseStore(rawValue: string | null): DiaryStore | null {
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as DiaryStore;
+    if (parsed?.version !== 1 || !Array.isArray(parsed.entries) || typeof parsed.guestId !== "string") {
+      return null;
+    }
+
+    return {
+      version: 1,
+      guestId: parsed.guestId,
+      entries: sortEntries(parsed.entries)
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function sortEntries(entries: MealEntry[]) {
+  return [...entries].sort((left, right) => {
+    return new Date(right.takenAt).getTime() - new Date(left.takenAt).getTime();
+  });
+}
+
+export function getEntriesForDay(entries: MealEntry[], localDate: string) {
+  return sortEntries(entries.filter((entry) => entry.localDate === localDate));
+}
+
+export function getEntriesForYearMonth(entries: MealEntry[], yearMonth: string) {
+  return sortEntries(entries.filter((entry) => getYearMonthKey(entry.localDate) === yearMonth));
+}
+
+export function getDaysLoggedCount(entries: MealEntry[]) {
+  return new Set(entries.map((entry) => entry.localDate)).size;
+}
+
+export function getDaysLoggedThisMonth(entries: MealEntry[]) {
+  return getDaysLoggedCount(getEntriesForYearMonth(entries, getCurrentYearMonth()));
+}
+
+export function getCurrentStreak(entries: MealEntry[]) {
+  const uniqueDates = [...new Set(entries.map((entry) => entry.localDate))].sort();
+  if (uniqueDates.length === 0) {
+    return 0;
+  }
+
+  const dateSet = new Set(uniqueDates);
+  let cursor = new Date();
+
+  if (!dateSet.has(toLocalDateString(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  let streak = 0;
+
+  while (dateSet.has(toLocalDateString(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
