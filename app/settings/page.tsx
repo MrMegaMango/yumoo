@@ -9,10 +9,10 @@ const supabaseConfigured = Boolean(
 );
 
 export default function SettingsPage() {
-  const { guestId, entries, clearAll } = useDiary();
+  const { entries, clearAll } = useDiary();
 
   function handleClear() {
-    if (!window.confirm("Clear all locally saved diary entries?")) {
+    if (!window.confirm("Clear all meals saved on this device?")) {
       return;
     }
 
@@ -22,47 +22,45 @@ export default function SettingsPage() {
   return (
     <AppShell
       title="Settings"
-      subtitle="Keep the account layer simple. Guest mode first, upgrades later."
+      subtitle="Keep your diary private, easy to revisit, and simple to manage."
     >
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-ink">Current mode</h2>
-          <Tag active>Guest</Tag>
+          <h2 className="text-xl font-semibold text-ink">This device</h2>
+          <Tag active>Private</Tag>
         </div>
         <p className="text-sm leading-6 text-cocoa">
-          Entries are currently stored on this device. Guest id:{" "}
-          <span className="font-medium text-ink">{guestId?.slice(0, 8)}</span>
+          Your meals are currently saved only on this device.
         </p>
         <p className="text-sm leading-6 text-cocoa">
-          When Supabase is configured, this page is the right place to add anonymous auth, Google
-          sign-in, and email OTP upgrade prompts.
+          If you want to keep your diary across devices later, this is where that option will live.
         </p>
       </Card>
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-ink">Sign-in options</h2>
-          <Tag active={supabaseConfigured}>{supabaseConfigured ? "Configured" : "Pending"}</Tag>
+          <h2 className="text-xl font-semibold text-ink">Save my diary</h2>
+          <Tag active={supabaseConfigured}>{supabaseConfigured ? "Ready" : "Soon"}</Tag>
         </div>
         <div className="grid gap-3">
           <Button disabled={!supabaseConfigured}>Continue with Google</Button>
           <Button variant="secondary" disabled={!supabaseConfigured}>
-            Email me a magic link
+            Email me a sign-in link
           </Button>
         </div>
         <p className="text-sm leading-6 text-cocoa">
-          Add your Supabase URL and anon key in `.env.local` to start wiring these actions.
+          These options will let you keep your diary with you instead of leaving it on one device.
         </p>
       </Card>
 
       <Card className="space-y-4">
-        <h2 className="text-xl font-semibold text-ink">Privacy and storage</h2>
+        <h2 className="text-xl font-semibold text-ink">Privacy</h2>
         <p className="text-sm leading-6 text-cocoa">
-          Original photos should live in private object storage for production. This scaffold uses
-          compressed local data URLs so the diary loop works before backend setup.
+          Your food photos are meant to feel personal first. You can keep this diary quiet and just
+          for you.
         </p>
         <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
-          {entries.length} saved meals currently live on this device.
+          {entries.length} saved meals are currently on this device.
         </div>
         <Button variant="danger" onClick={handleClear}>
           Clear local diary
@@ -71,4 +69,3 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
-

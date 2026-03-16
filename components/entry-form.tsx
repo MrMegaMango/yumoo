@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useDiary } from "@/components/diary-provider";
-import { Button, Card, Tag, buttonClasses, cx } from "@/components/ui";
+import { Button, Card, buttonClasses, cx } from "@/components/ui";
 import { fromDateAndTime, toLocalDateString, toTimeInputValue } from "@/lib/date";
 import { mealTypes, type MealEntry, type MealType } from "@/lib/types";
 
@@ -91,7 +91,7 @@ export function EntryForm({
               Photo
             </p>
             <p className="mt-1 text-sm text-cocoa">
-              Save instantly. Cute art finishes in the background.
+              Your calendar updates right away, then the cute version settles in.
             </p>
           </div>
           <label className={buttonClasses("secondary", "cursor-pointer")}>
@@ -114,8 +114,8 @@ export function EntryForm({
             />
           ) : (
             <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(255,210,186,0.85),_transparent_35%),linear-gradient(180deg,#FFF8F2_0%,#FFEBDC_100%)] px-8 text-center text-sm leading-6 text-cocoa">
-              Your original photo stays on-device in this guest-mode scaffold.
-              Supabase storage can replace this local store next.
+              Add a favorite plate, cafe stop, or late-night snack and let it become part of the
+              month.
             </div>
           )}
         </div>
@@ -187,10 +187,9 @@ export function EntryForm({
         </div>
 
         <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
-          <p className="font-semibold text-ink">Guest mode</p>
+          <p className="font-semibold text-ink">Private for now</p>
           <p className="mt-1">
-            This scaffold keeps entries private on this device. Wire Supabase auth and storage when
-            you are ready to move beyond local guest mode.
+            Your diary stays on this device unless you choose to save it somewhere permanent later.
           </p>
         </div>
       </Card>
@@ -208,14 +207,6 @@ export function EntryForm({
         </Link>
       </div>
 
-      {existingEntry ? (
-        <div className="flex items-center gap-2 text-xs text-cocoa">
-          <Tag active={existingEntry.art.status === "ready"}>
-            {existingEntry.art.status === "ready" ? "Art ready" : "Placeholder active"}
-          </Tag>
-          <span>Original photo preserved unless you swap it.</span>
-        </div>
-      ) : null}
     </form>
   );
 }

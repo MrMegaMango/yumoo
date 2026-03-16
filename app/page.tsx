@@ -1,12 +1,11 @@
 import Link from "next/link";
 
-import { Card, Tag, buttonClasses } from "@/components/ui";
+import { Card, buttonClasses } from "@/components/ui";
 
 export default function LandingPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-[430px] flex-col justify-between px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))]">
       <section className="space-y-6">
-        <Tag active>Mobile-first PWA</Tag>
         <div>
           <p className="text-sm font-medium text-cocoa">Yumoo</p>
           <h1 className="mt-3 max-w-sm text-5xl font-semibold leading-[1.02] text-ink">
@@ -45,17 +44,15 @@ export default function LandingPage() {
 
       <section className="space-y-3 pb-10">
         <Link href="/calendar" className={buttonClasses("primary", "w-full")}>
-          Start in guest mode
+          Start my diary
         </Link>
         <Link href="/entry/new" className={buttonClasses("secondary", "w-full")}>
           Add a first meal
         </Link>
         <p className="px-2 text-center text-sm leading-6 text-cocoa">
-          Google sign-in and email OTP belong in the next Supabase integration pass. This first
-          scaffold focuses on the visual loop.
+          Start with one meal now and decide later if you want to save your diary across devices.
         </p>
       </section>
     </main>
   );
 }
-
