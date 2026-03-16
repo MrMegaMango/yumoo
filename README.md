@@ -1,6 +1,6 @@
 # Yumoo
 
-Yumoo is a mobile-first PWA food diary scaffold built around one idea: the calendar should become a cute monthly visual diary, not a health dashboard.
+Hi, Yumoo is a mobile-first PWA food diary scaffold built around one idea: the calendar should become a cute monthly visual diary, not a health dashboard.
 
 ## What is in this first scaffold
 
