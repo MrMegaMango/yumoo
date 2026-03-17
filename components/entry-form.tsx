@@ -94,27 +94,15 @@ export function EntryForm({
               Your calendar updates right away, then the cute version settles in.
             </p>
           </div>
-          <div className="flex gap-2">
-            <label className={buttonClasses("secondary", "cursor-pointer")}>
-              Album
-              <input
-                className="hidden"
-                type="file"
-                accept="image/*"
-                onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-              />
-            </label>
-            <label className={buttonClasses("secondary", "cursor-pointer")}>
-              Camera
-              <input
-                className="hidden"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-              />
-            </label>
-          </div>
+          <label className={buttonClasses("secondary", "cursor-pointer")}>
+            {existingEntry ? "Swap photo" : "Add photo"}
+            <input
+              className="hidden"
+              type="file"
+              accept="image/*"
+              onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
         </div>
         <div className="overflow-hidden rounded-[28px] border border-[#ECDACC] bg-[#FFF7F0]">
           {previewUrl ? (
