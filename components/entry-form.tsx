@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { useDiary } from "@/components/diary-provider";
 import { Button, Card, buttonClasses, cx } from "@/components/ui";
 import { fromDateAndTime, toLocalDateString, toTimeInputValue } from "@/lib/date";
-import { mealTypes, type MealEntry, type MealType } from "@/lib/types";
+import { getCurrentStreak } from "@/lib/diary";
+import { mealTypes, moods, type MealEntry, type MealType, type Mood } from "@/lib/types";
 
 type EntryFormProps = {
   mode: "create" | "edit";
@@ -16,7 +17,7 @@ type EntryFormProps = {
 };
 
 function formatMealType(mealType: MealType) {
-  return mealType.charAt(0).toUpperCase() + mealType.slice(1);
+  return mealType;
 }
 
 export function EntryForm({
@@ -25,10 +26,14 @@ export function EntryForm({
   defaultLocalDate
 }: EntryFormProps) {
   const router = useRouter();
-  const { saveEntry } = useDiary();
+  const { entries, saveEntry } = useDiary();
+  const streak = getCurrentStreak(entries);
+  const weekGoal = 7;
+  const daysLeft = Math.max(0, weekGoal - streak);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState(existingEntry?.photoDataUrl ?? "");
-  const [caption, setCaption] = useState(existingEntry?.caption ?? "");
+  const [caption] = useState(existingEntry?.caption ?? "");
+  const [mood, setMood] = useState<Mood | undefined>(existingEntry?.mood);
   const [mealType, setMealType] = useState<MealType | undefined>(existingEntry?.mealType);
   const [dateValue, setDateValue] = useState(
     existingEntry?.localDate ?? defaultLocalDate ?? toLocalDateString(new Date())
@@ -62,6 +67,7 @@ export function EntryForm({
           const entry = await saveEntry(
             {
               caption,
+              mood,
               mealType,
               takenAt: fromDateAndTime(dateValue, timeValue),
               photoFile: selectedFile,
@@ -91,7 +97,7 @@ export function EntryForm({
               Photo
             </p>
             <p className="mt-1 text-sm text-cocoa">
-              Your calendar updates right away, then the cute version settles in.
+              Your meal gets an art makeover that feels like your mood.
             </p>
           </div>
           <label className={buttonClasses("secondary", "cursor-pointer")}>
@@ -113,8 +119,7 @@ export function EntryForm({
             />
           ) : (
             <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(255,210,186,0.85),_transparent_35%),linear-gradient(180deg,#FFF8F2_0%,#FFEBDC_100%)] px-8 text-center text-sm leading-6 text-cocoa">
-              Add a favorite plate, cafe stop, or late-night snack and let it become part of the
-              month.
+              what&apos;s the vibe today? snap the food that matches your energy ✨
             </div>
           )}
         </div>
@@ -122,21 +127,34 @@ export function EntryForm({
 
       <Card className="space-y-4">
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
-            Caption
-          </label>
-          <textarea
-            className="field min-h-24 resize-none"
-            placeholder="What made this one memorable?"
-            value={caption}
-            onChange={(event) => setCaption(event.target.value)}
-            maxLength={120}
-          />
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
+            Mood
+          </p>
+          <div className="flex gap-3">
+            {moods.map((option) => {
+              const active = option === mood;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setMood(active ? undefined : option)}
+                  className={cx(
+                    "flex h-12 w-12 items-center justify-center rounded-full text-2xl transition",
+                    active
+                      ? "bg-ink shadow-card ring-2 ring-ink/30 scale-110"
+                      : "bg-white/80 ring-1 ring-[#EAD6C7]"
+                  )}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
-            Meal type
+            What kind of eat
           </p>
           <div className="flex flex-wrap gap-2">
             {mealTypes.map((option) => {
@@ -160,50 +178,88 @@ export function EntryForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
-              Date
-            </label>
-            <input
-              className="field"
-              type="date"
-              value={dateValue}
-              onChange={(event) => setDateValue(event.target.value)}
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
-              Time
-            </label>
-            <input
-              className="field"
-              type="time"
-              value={timeValue}
-              onChange={(event) => setTimeValue(event.target.value)}
-            />
-          </div>
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
+            Date
+          </label>
+          <input
+            className="field"
+            type="date"
+            value={dateValue}
+            onChange={(event) => setDateValue(event.target.value)}
+          />
         </div>
 
-        <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
-          <p className="font-semibold text-ink">Private for now</p>
-          <p className="mt-1">
-            Your diary stays on this device unless you choose to save it somewhere permanent later.
-          </p>
-        </div>
       </Card>
 
       {error ? (
         <Card className="border-[#E8BCB7] bg-[#FFF3F1] text-sm text-[#8F403E]">{error}</Card>
       ) : null}
 
+      {mode === "create" ? (
+        <div className="rounded-[20px] p-4" style={{
+          background: streak === 0
+            ? "#FFF5EE"
+            : streak <= 2
+            ? "linear-gradient(135deg, #FFF5EE, #FFE0CC)"
+            : streak <= 4
+            ? "linear-gradient(135deg, #FFE0CC, #FFBFA3, #FFA4E0)"
+            : streak <= 6
+            ? "linear-gradient(135deg, #FFBFA3, #FF8ED4, #B88CFF)"
+            : "linear-gradient(135deg, #FF8ED4, #B88CFF, #7DD3FC, #FDE68A)"
+        }}>
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold text-ink">
+              {daysLeft === 0
+                ? "✨ art recap unlocked let's gooo"
+                : daysLeft >= 6
+                ? `${daysLeft} days to go — your art recap is cooking 🍳`
+                : daysLeft >= 4
+                ? `${daysLeft} days left — the vibes are building 💫`
+                : daysLeft >= 2
+                ? `only ${daysLeft} more — your recap is almost ready to serve 🍽️`
+                : "1 more day and it's giving masterpiece 🎨"}
+            </span>
+            <span className="text-sm font-bold text-ink">{streak}/{weekGoal} 🔥</span>
+          </div>
+          <div className="mt-3 flex gap-1.5">
+            {Array.from({ length: weekGoal }, (_, i) => (
+              <div
+                key={i}
+                className="h-3 flex-1 rounded-full transition-all"
+                style={{
+                  background: i < streak
+                    ? [
+                        "#FFCBA4",
+                        "#FFB088",
+                        "#FF926B",
+                        "#FF7EB3",
+                        "#D97BFF",
+                        "#A78BFA",
+                        "#7DD3FC"
+                      ][i]
+                    : "rgba(255,255,255,0.6)"
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-3">
         <Button className="flex-1" type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : mode === "create" ? "Save meal" : "Update meal"}
+          {isPending ? "Logging the vibe..." : mode === "create" ? "Drop it in 🍽️" : "Update the vibe"}
         </Button>
         <Link href={existingEntry ? `/day/${existingEntry.localDate}` : "/calendar"} className={buttonClasses("secondary")}>
           Cancel
         </Link>
+      </div>
+
+      <div className="flex items-start gap-3 px-1 py-2 text-sm leading-6 text-cocoa/60">
+        <span className="text-base">🔒</span>
+        <p>
+          <span className="font-semibold text-cocoa/80">Your private vault</span> — nothing leaves this device unless you say so.
+        </p>
       </div>
 
     </form>

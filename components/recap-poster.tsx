@@ -40,7 +40,7 @@ export function RecapPoster({
               >
                 <div className="rounded-[18px] bg-white/28 p-3 backdrop-blur">
                   <p className="line-clamp-2 text-sm font-semibold text-ink">
-                    {entry.caption || "Saved without a caption"}
+                    {entry.mood || entry.caption || "Saved meal"}
                   </p>
                   <p className="mt-2 text-xs text-cocoa">{entry.localDate}</p>
                 </div>

@@ -16,7 +16,7 @@ export default function NewEntryPage({
   return (
     <AppShell
       title="Add a meal"
-      subtitle="Capture the photo, add a caption if you want, and let the calendar fill in."
+      subtitle="Snap a photo, pick your mood, and let the calendar fill in."
       showFab={false}
     >
       <EntryForm mode="create" defaultLocalDate={defaultLocalDate} />

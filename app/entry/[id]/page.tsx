@@ -51,7 +51,7 @@ export default function EntryDetailPage({
 
   return (
     <AppShell
-      title={currentEntry.caption || "Meal detail"}
+      title={currentEntry.mood ? `${currentEntry.mood} Meal` : "Meal detail"}
       subtitle={`${formatFullDate(currentEntry.localDate)} at ${formatTimeLabel(currentEntry.takenAt)}`}
       showFab={false}
       headerTrailing={currentEntry.mealType ? <Tag>{currentEntry.mealType}</Tag> : null}
@@ -61,7 +61,7 @@ export default function EntryDetailPage({
       <Card className="overflow-hidden p-0">
         <img
           src={currentEntry.photoDataUrl}
-          alt={currentEntry.caption || "Meal photo"}
+          alt={currentEntry.mood ? `${currentEntry.mood} Meal photo` : "Meal photo"}
           className="h-80 w-full object-cover"
         />
       </Card>

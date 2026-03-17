@@ -51,7 +51,7 @@ export function buildRecapSvg(input: {
           <rect x="24" y="24" width="404" height="204" rx="28" fill="${b}" opacity="0.55" />
           <circle cx="340" cy="72" r="44" fill="${c}" opacity="0.86" />
           <text x="32" y="196" font-size="28" font-family="Arial, sans-serif" fill="#2B221E">
-            ${escapeXml(entry.caption || "Logged without a caption")}
+            ${escapeXml(entry.mood || entry.caption || "Logged meal")}
           </text>
           <text x="32" y="228" font-size="20" font-family="Arial, sans-serif" fill="#6B584E">
             ${escapeXml(entry.localDate)}

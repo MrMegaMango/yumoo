@@ -54,7 +54,7 @@ export default function DayPage({
                     {formatTimeLabel(entry.takenAt)}
                   </p>
                   <h2 className="mt-2 text-xl font-semibold text-ink">
-                    {entry.caption || "Meal without a caption"}
+                    {entry.mood ? `${entry.mood} Meal` : entry.caption || "Meal"}
                   </h2>
                 </div>
                 {entry.mealType ? <Tag>{entry.mealType}</Tag> : null}

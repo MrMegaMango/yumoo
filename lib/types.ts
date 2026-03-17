@@ -1,12 +1,15 @@
 export const mealTypes = [
-  "breakfast",
-  "lunch",
-  "dinner",
-  "snack",
-  "drink"
+  "🌅 morning fuel",
+  "☀️ main character meal",
+  "🌙 late night bite",
+  "🍿 just a lil treat",
+  "🧋 sip sip"
 ] as const;
 
 export type MealType = (typeof mealTypes)[number];
+
+export const moods = ["😋", "🫠", "😮‍💨", "😍", "🥱"] as const;
+export type Mood = (typeof moods)[number];
 
 export type ArtStatus = "queued" | "ready" | "failed";
 
@@ -43,6 +46,7 @@ export type MealEntry = {
   id: string;
   userId: string;
   caption: string;
+  mood?: Mood;
   mealType?: MealType;
   takenAt: string;
   localDate: string;
@@ -60,6 +64,7 @@ export type DiaryStore = {
 
 export type SaveEntryInput = {
   caption: string;
+  mood?: Mood;
   mealType?: MealType;
   takenAt: string;
   photoFile?: File | null;

@@ -133,6 +133,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       ? {
           ...existingEntry,
           caption: input.caption.trim(),
+          mood: input.mood,
           mealType: input.mealType,
           takenAt: input.takenAt,
           localDate: toLocalDateString(input.takenAt),
@@ -146,6 +147,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
           id: crypto.randomUUID(),
           userId: currentStore.guestId,
           caption: input.caption.trim(),
+          mood: input.mood,
           mealType: input.mealType,
           takenAt: input.takenAt,
           localDate: toLocalDateString(input.takenAt),

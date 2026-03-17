@@ -41,14 +41,14 @@ export function ArtTile({
       {size !== "sm" ? (
         <img
           src={entry.photoDataUrl}
-          alt={entry.caption || "Meal photo"}
+          alt={entry.mood ? `${entry.mood} Meal photo` : "Meal photo"}
           className="absolute bottom-4 right-4 h-20 w-20 rounded-[22px] border border-white/70 object-cover shadow-card"
         />
       ) : null}
       {showCaption ? (
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white/85 via-white/30 to-transparent p-4">
           <p className="line-clamp-2 text-sm font-semibold text-ink">
-            {entry.caption || "Meal without a caption"}
+            {entry.mood || entry.caption || "Meal"}
           </p>
         </div>
       ) : null}
