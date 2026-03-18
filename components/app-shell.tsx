@@ -23,7 +23,7 @@ export function AppShell({
     <div className="relative mx-auto flex min-h-screen max-w-[430px] flex-col px-4 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]">
       <header className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-cocoa">Yumoo</p>
+          <Link href="/" className="text-sm font-medium text-cocoa transition hover:text-ink">Yumoo</Link>
           <h1 className="mt-1 text-3xl font-semibold leading-tight text-ink">{title}</h1>
           {subtitle ? <p className="mt-2 max-w-xs text-sm leading-6 text-cocoa">{subtitle}</p> : null}
         </div>

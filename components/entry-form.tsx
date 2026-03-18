@@ -34,7 +34,13 @@ export function EntryForm({
   const [previewUrl, setPreviewUrl] = useState(existingEntry?.photoDataUrl ?? "");
   const [caption] = useState(existingEntry?.caption ?? "");
   const [mood, setMood] = useState<Mood | undefined>(existingEntry?.mood);
+  const isCustomMood = existingEntry?.mood && !(moods as readonly string[]).includes(existingEntry.mood);
+  const [customMood, setCustomMood] = useState(isCustomMood ? existingEntry.mood : "");
+  const [showCustomMood, setShowCustomMood] = useState(!!isCustomMood);
   const [mealType, setMealType] = useState<MealType | undefined>(existingEntry?.mealType);
+  const isCustomPreset = existingEntry?.mealType && !(mealTypes as readonly string[]).includes(existingEntry.mealType);
+  const [customTag, setCustomTag] = useState(isCustomPreset ? existingEntry.mealType : "");
+  const [showCustom, setShowCustom] = useState(!!isCustomPreset);
   const [dateValue, setDateValue] = useState(
     existingEntry?.localDate ?? defaultLocalDate ?? toLocalDateString(new Date())
   );
@@ -132,12 +138,20 @@ export function EntryForm({
           </p>
           <div className="flex gap-3">
             {moods.map((option) => {
-              const active = option === mood;
+              const active = option === mood && !showCustomMood;
               return (
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setMood(active ? undefined : option)}
+                  onClick={() => {
+                    if (active) {
+                      setMood(undefined);
+                    } else {
+                      setMood(option);
+                      setShowCustomMood(false);
+                      setCustomMood("");
+                    }
+                  }}
                   className={cx(
                     "flex h-12 w-12 items-center justify-center rounded-full text-2xl transition",
                     active
@@ -149,21 +163,65 @@ export function EntryForm({
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => {
+                if (showCustomMood) {
+                  setShowCustomMood(false);
+                  setCustomMood("");
+                  setMood(undefined);
+                } else {
+                  setShowCustomMood(true);
+                  setMood(undefined);
+                }
+              }}
+              className={cx(
+                "flex h-12 w-12 items-center justify-center rounded-full text-sm transition",
+                showCustomMood
+                  ? "bg-ink text-white shadow-card ring-2 ring-ink/30 scale-110"
+                  : "bg-white/80 text-cocoa ring-1 ring-[#EAD6C7]"
+              )}
+            >
+              ✏️
+            </button>
           </div>
+          {showCustomMood ? (
+            <input
+              className="mt-2 w-full rounded-full border border-[#EAD6C7] bg-white/80 px-4 py-2 text-sm text-cocoa placeholder:text-cocoa/40 focus:outline-none focus:ring-2 focus:ring-ink/30"
+              type="text"
+              placeholder="type your mood..."
+              maxLength={20}
+              value={customMood}
+              autoFocus
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomMood(val);
+                setMood(val.trim() ? val.trim() : undefined);
+              }}
+            />
+          ) : null}
         </div>
 
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-cocoa/70">
-            What kind of eat
+            Vibe tag
           </p>
           <div className="flex flex-wrap gap-2">
             {mealTypes.map((option) => {
-              const active = option === mealType;
+              const active = option === mealType && !showCustom;
               return (
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setMealType(active ? undefined : option)}
+                  onClick={() => {
+                    if (active) {
+                      setMealType(undefined);
+                    } else {
+                      setMealType(option);
+                      setShowCustom(false);
+                      setCustomTag("");
+                    }
+                  }}
                   className={cx(
                     "rounded-full px-3 py-2 text-sm transition",
                     active
@@ -175,7 +233,43 @@ export function EntryForm({
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => {
+                if (showCustom) {
+                  setShowCustom(false);
+                  setCustomTag("");
+                  setMealType(undefined);
+                } else {
+                  setShowCustom(true);
+                  setMealType(undefined);
+                }
+              }}
+              className={cx(
+                "rounded-full px-3 py-2 text-sm transition",
+                showCustom
+                  ? "bg-ink text-white shadow-card"
+                  : "bg-white/80 text-cocoa ring-1 ring-[#EAD6C7]"
+              )}
+            >
+              ✏️ other
+            </button>
           </div>
+          {showCustom ? (
+            <input
+              className="mt-2 w-full rounded-full border border-[#EAD6C7] bg-white/80 px-4 py-2 text-sm text-cocoa placeholder:text-cocoa/40 focus:outline-none focus:ring-2 focus:ring-ink/30"
+              type="text"
+              placeholder="type your own vibe..."
+              maxLength={30}
+              value={customTag}
+              autoFocus
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomTag(val);
+                setMealType(val.trim() ? val.trim() : undefined);
+              }}
+            />
+          ) : null}
         </div>
 
         <div>

@@ -1,15 +1,16 @@
 export const mealTypes = [
-  "🌅 morning fuel",
-  "☀️ main character meal",
-  "🌙 late night bite",
-  "🍿 just a lil treat",
-  "🧋 sip sip"
+  "🥬 go green",
+  "🍰 sweet treat",
+  "🏡 homemade",
+  "🍜 comfort bowl",
+  "🔥 street food",
+  "✨ bougie bite"
 ] as const;
 
-export type MealType = (typeof mealTypes)[number];
+export type MealType = (typeof mealTypes)[number] | (string & {});
 
 export const moods = ["😋", "🫠", "😮‍💨", "😍", "🥱"] as const;
-export type Mood = (typeof moods)[number];
+export type Mood = (typeof moods)[number] | (string & {});
 
 export type ArtStatus = "queued" | "ready" | "failed";
 

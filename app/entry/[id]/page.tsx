@@ -46,7 +46,7 @@ export default function EntryDetailPage({
     }
 
     deleteEntry(currentEntry.id);
-    router.push(`/day/${currentEntry.localDate}`);
+    router.push("/calendar");
   }
 
   return (

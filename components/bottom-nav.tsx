@@ -7,7 +7,7 @@ import { getCurrentYearMonth } from "@/lib/date";
 import { cx } from "@/components/ui";
 
 const items = [
-  { href: "/calendar", label: "Calendar", match: "/calendar" },
+  { href: "/calendar", label: "Gallery", match: "/calendar" },
   { href: `/recap/${getCurrentYearMonth()}`, label: "Recap", match: "/recap" },
   { href: "/settings", label: "Settings", match: "/settings" }
 ];

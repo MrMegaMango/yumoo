@@ -43,11 +43,11 @@ export default function LandingPage() {
       </section>
 
       <section className="space-y-3 pb-10">
-        <Link href="/calendar" className={buttonClasses("primary", "w-full")}>
-          Start my diary
-        </Link>
-        <Link href="/entry/new" className={buttonClasses("secondary", "w-full")}>
+        <Link href="/entry/new" className={buttonClasses("primary", "w-full")}>
           Add a first meal
+        </Link>
+        <Link href="/calendar" className={buttonClasses("secondary", "w-full")}>
+          Check my gallery
         </Link>
         <p className="px-2 text-center text-sm leading-6 text-cocoa">
           Start with one meal now and decide later if you want to save your diary across devices.
