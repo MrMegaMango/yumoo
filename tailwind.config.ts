@@ -20,7 +20,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
-        display: ["var(--font-display)"]
+        display: ["var(--font-display)"],
+        headline: ["var(--font-headline)"]
       },
       boxShadow: {
         card: "0 22px 50px -28px rgba(91, 60, 38, 0.28)",
@@ -32,10 +33,10 @@ const config: Config = {
           "50%": { transform: "translateY(-4px)" }
         },
         "hero-float": {
-          "0%": { transform: "rotateX(6deg) rotateY(-2deg) translateY(0px) scale(1.02)" },
-          "33%": { transform: "rotateX(3deg) rotateY(3deg) translateY(-8px) scale(1.04)" },
-          "66%": { transform: "rotateX(-2deg) rotateY(-3deg) translateY(-4px) scale(1.03)" },
-          "100%": { transform: "rotateX(6deg) rotateY(-2deg) translateY(0px) scale(1.02)" }
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "25%": { transform: "translateY(-5px) rotate(0.5deg)" },
+          "50%": { transform: "translateY(-3px) rotate(-0.4deg)" },
+          "75%": { transform: "translateY(-6px) rotate(0.3deg)" }
         },
         rise: {
           "0%": { opacity: "0", transform: "translateY(10px)" },
@@ -44,7 +45,7 @@ const config: Config = {
       },
       animation: {
         float: "float 4s ease-in-out infinite",
-        "hero-float": "hero-float 6s ease-in-out infinite",
+        "hero-float": "hero-float 8s ease-in-out infinite",
         rise: "rise 0.5s ease-out"
       }
     }

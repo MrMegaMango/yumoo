@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Nanum_Myeongjo, Plus_Jakarta_Sans } from "next/font/google";
 
 import "@/app/globals.css";
 
@@ -15,6 +15,12 @@ const fontSans = Plus_Jakarta_Sans({
 const fontDisplay = Fraunces({
   subsets: ["latin"],
   variable: "--font-display"
+});
+
+const fontHeadline = Nanum_Myeongjo({
+  weight: ["700"],
+  subsets: ["latin"],
+  variable: "--font-headline"
 });
 
 export const metadata: Metadata = {
@@ -51,7 +57,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable} ${fontHeadline.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
         <DiaryProvider>
           <PWAProvider />
