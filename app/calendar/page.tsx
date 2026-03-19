@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { useDiary } from "@/components/diary-provider";
-import { Tag, buttonClasses, cx } from "@/components/ui";
+import { Tag, cx } from "@/components/ui";
 import { formatMonthLabel, addMonths, getYearMonthKey, toLocalDateString } from "@/lib/date";
 import { getEntriesForYearMonth } from "@/lib/diary";
 import type { MealEntry } from "@/lib/types";
@@ -214,9 +214,6 @@ export default function GalleryPage() {
             </div>
           </div>
           <p className="text-sm text-cocoa">Your gallery is a blank canvas.</p>
-          <Link href="/entry/new" className={buttonClasses("primary", "w-full")}>
-            Add first meal
-          </Link>
         </div>
       ) : ready && filtered.length === 0 ? (
         <div className="flex gap-3 px-2">
