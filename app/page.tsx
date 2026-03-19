@@ -4,10 +4,10 @@ import { buttonClasses } from "@/components/ui";
 
 export default function LandingPage() {
   return (
-    <main className="mx-auto flex h-[100dvh] max-w-[430px] flex-col justify-between overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(2rem+env(safe-area-inset-top))]">
+    <main className="mx-auto flex min-h-[100dvh] max-w-[430px] flex-col justify-between px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(2rem+env(safe-area-inset-top))]">
       {/* Hero */}
-      <section className="space-y-6">
-        <div>
+      <section className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="shrink-0">
           <p className="text-sm font-medium text-cocoa">Yumoo</p>
           <h1 className="mt-4 max-w-[340px] font-headline text-[2.75rem] font-bold leading-[1.05] tracking-tight text-ink">
             A Scrapbook For How Life Tastes Today
@@ -20,11 +20,11 @@ export default function LandingPage() {
         </div>
 
         {/* Sticker-book illustration */}
-        <div className="-mx-6 flex items-center justify-center">
+        <div className="-mx-6 flex min-h-0 flex-1 items-center justify-center">
           <img
             src="/hero-sticker-book.png"
             alt="A scrapbook style food diary illustration"
-            className="w-[110%] max-w-[440px] animate-hero-float drop-shadow-[0_12px_28px_rgba(107,88,78,0.15)]"
+            className="max-h-full w-[110%] max-w-[440px] object-contain animate-hero-float drop-shadow-[0_12px_28px_rgba(107,88,78,0.15)]"
           />
         </div>
       </section>
