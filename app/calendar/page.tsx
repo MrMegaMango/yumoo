@@ -367,15 +367,15 @@ function SketchCamera({ className }: { className?: string }) {
     <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <path
         d="M8 16 C7 14, 9 12, 12 12 L16 12 L18 9 C19 8, 20 8, 21 8 L27 8 C28 8, 29 8, 30 9 L32 12 L36 12 C39 12, 41 14, 40 16 L39 34 C40 37, 38 39, 35 38 L13 38 C10 39, 8 37, 9 34 Z"
-        stroke="#C4A882"
-        strokeWidth="1.2"
+        stroke="#A08060"
+        strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.35"
+        opacity="0.5"
       />
-      <circle cx="24" cy="24" r="7" stroke="#C4A882" strokeWidth="1" opacity="0.3" />
-      <circle cx="24" cy="24" r="4" stroke="#C4A882" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.2" />
-      <circle cx="34" cy="15" r="1.5" fill="#C4A882" opacity="0.2" />
+      <circle cx="24" cy="24" r="7" stroke="#A08060" strokeWidth="1.3" opacity="0.45" />
+      <circle cx="24" cy="24" r="4" stroke="#A08060" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
+      <circle cx="34" cy="15" r="1.5" fill="#A08060" opacity="0.35" />
     </svg>
   );
 }
@@ -385,13 +385,13 @@ function SketchBowl({ className }: { className?: string }) {
     <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <path
         d="M8 22 C8 22, 10 34, 24 36 C38 34, 40 22, 40 22"
-        stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" opacity="0.35"
+        stroke="#A08060" strokeWidth="1.6" strokeLinecap="round" opacity="0.5"
       />
-      <path d="M6 22 L42 22" stroke="#C4A882" strokeWidth="1" strokeLinecap="round" opacity="0.3" />
-      <path d="M14 18 C14 14, 18 12, 18 12" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
-      <path d="M22 16 C22 12, 24 10, 24 10" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
-      <path d="M30 18 C30 14, 32 13, 32 13" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
-      <ellipse cx="24" cy="27" rx="10" ry="3" stroke="#C4A882" strokeWidth="0.6" strokeDasharray="2 3" opacity="0.15" />
+      <path d="M6 22 L42 22" stroke="#A08060" strokeWidth="1.3" strokeLinecap="round" opacity="0.45" />
+      <path d="M14 18 C14 14, 18 12, 18 12" stroke="#A08060" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
+      <path d="M22 16 C22 12, 24 10, 24 10" stroke="#A08060" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
+      <path d="M30 18 C30 14, 32 13, 32 13" stroke="#A08060" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
+      <ellipse cx="24" cy="27" rx="10" ry="3" stroke="#A08060" strokeWidth="0.8" strokeDasharray="2 3" opacity="0.25" />
     </svg>
   );
 }
@@ -401,16 +401,16 @@ function SketchCoffee({ className }: { className?: string }) {
     <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <path
         d="M12 18 L14 36 C14 38, 16 40, 20 40 L28 40 C32 40, 34 38, 34 36 L36 18"
-        stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"
+        stroke="#A08060" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"
       />
-      <path d="M10 18 L38 18" stroke="#C4A882" strokeWidth="1" strokeLinecap="round" opacity="0.3" />
+      <path d="M10 18 L38 18" stroke="#A08060" strokeWidth="1.3" strokeLinecap="round" opacity="0.45" />
       <path
         d="M36 22 C40 22, 42 24, 42 28 C42 32, 40 34, 36 34"
-        stroke="#C4A882" strokeWidth="1" strokeLinecap="round" opacity="0.25"
+        stroke="#A08060" strokeWidth="1.3" strokeLinecap="round" opacity="0.4"
       />
-      <path d="M18 14 C18 10, 20 8, 20 8" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
-      <path d="M26 12 C26 9, 28 7, 28 7" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
-      <ellipse cx="12" cy="42" rx="14" ry="1.5" fill="#C4A882" opacity="0.06" />
+      <path d="M18 14 C18 10, 20 8, 20 8" stroke="#A08060" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
+      <path d="M26 12 C26 9, 28 7, 28 7" stroke="#A08060" strokeWidth="1" strokeLinecap="round" opacity="0.35" />
+      <ellipse cx="12" cy="42" rx="14" ry="1.5" fill="#A08060" opacity="0.1" />
     </svg>
   );
 }
@@ -420,15 +420,15 @@ function SketchToast({ className }: { className?: string }) {
     <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <path
         d="M10 18 C10 10, 16 6, 24 6 C32 6, 38 10, 38 18 L38 38 C38 40, 36 42, 34 42 L14 42 C12 42, 10 40, 10 38 Z"
-        stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"
+        stroke="#A08060" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"
       />
       <path
         d="M16 22 C16 18, 20 16, 24 16 C28 16, 32 18, 32 22 L32 32 L16 32 Z"
-        stroke="#C4A882" strokeWidth="0.8" strokeDasharray="2 3" strokeLinecap="round" opacity="0.2"
+        stroke="#A08060" strokeWidth="1" strokeDasharray="2 3" strokeLinecap="round" opacity="0.3"
       />
-      <circle cx="22" cy="26" r="1" fill="#C4A882" opacity="0.15" />
-      <circle cx="26" cy="24" r="0.8" fill="#C4A882" opacity="0.12" />
-      <circle cx="24" cy="28" r="0.6" fill="#C4A882" opacity="0.1" />
+      <circle cx="22" cy="26" r="1.2" fill="#A08060" opacity="0.25" />
+      <circle cx="26" cy="24" r="1" fill="#A08060" opacity="0.2" />
+      <circle cx="24" cy="28" r="0.8" fill="#A08060" opacity="0.18" />
     </svg>
   );
 }
@@ -442,12 +442,12 @@ function SketchStar({ className, style }: { className?: string; style?: React.CS
     <svg viewBox="0 0 16 16" fill="none" className={className} style={style} xmlns="http://www.w3.org/2000/svg">
       <path
         d="M8 1 L9.5 5.5 L14 6.5 L10.5 9.5 L11.5 14 L8 11.5 L4.5 14 L5.5 9.5 L2 6.5 L6.5 5.5 Z"
-        stroke="#D4B88C"
-        strokeWidth="0.8"
+        stroke="#A08060"
+        strokeWidth="1"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
-        opacity="0.3"
+        opacity="0.4"
       />
     </svg>
   );
@@ -605,9 +605,29 @@ function WeekSpread({ week }: { week: WeekGroup }) {
           style={{
             background: "linear-gradient(170deg, #FFF9F0 0%, #FFF3E4 50%, #FFEDD8 100%)",
             clipPath: deckledCard,
-            boxShadow: "2px 3px 12px rgba(107,88,78,0.08)",
+            boxShadow: "2px 3px 12px rgba(107,88,78,0.1)",
           }}
         >
+          {/* Hand-drawn border */}
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 160 200" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M8 6 C5 4, 12 2, 20 3 L140 5 C148 3, 155 6, 154 10 L152 188 C153 194, 148 198, 140 196 L18 195 C10 197, 5 193, 7 188 Z"
+              stroke="#C4A882"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.45"
+            />
+            <path
+              d="M14 14 C11 11, 18 9, 24 10 L136 12 C142 10, 148 14, 146 18 L144 170 C145 176, 140 179, 134 178 L22 176 C16 178, 12 174, 14 168 Z"
+              stroke="#C4A882"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.25"
+            />
+          </svg>
+
           {/* Paper grain */}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -620,16 +640,16 @@ function WeekSpread({ week }: { week: WeekGroup }) {
           <div className="flex aspect-[4/5] flex-col items-center justify-center">
             {(() => { const Illust = slotIllustrations[dayIndex]; return <Illust className="h-14 w-14" />; })()}
             <SketchStar
-              className="absolute h-4 w-4"
-              style={{ top: "12%", right: "14%", rotate: "12deg" }}
+              className="absolute h-5 w-5"
+              style={{ top: "10%", right: "12%", rotate: "12deg" }}
             />
             <SketchStar
-              className="absolute h-3 w-3"
-              style={{ bottom: "28%", left: "10%", rotate: "-18deg" }}
+              className="absolute h-4 w-4"
+              style={{ bottom: "26%", left: "8%", rotate: "-18deg" }}
             />
           </div>
 
-          {/* Day label + text — lowercase serif style */}
+          {/* Day label + text */}
           <div className="mt-1 px-0.5">
             <p className="font-display text-[10px] lowercase tracking-[0.18em] text-cocoa/70">
               {dayLabels[dayIndex].toLowerCase()} {dayNum}
