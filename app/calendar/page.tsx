@@ -126,7 +126,7 @@ function DotTracker({ viewMonth, loggedDates }: { viewMonth: Date; loggedDates: 
 
 /* ── Filters ── */
 
-const filters = ["all", "🥬 go green", "🍰 sweet treat", "🏡 homemade", "🍜 comfort bowl", "🔥 street food", "✨ bougie bite"] as const;
+const filters = ["all", "🥬 Go Green", "🍰 Sweet Treat", "🏡 Homemade", "🔥 Street Food", "✨ Bougie Bite"] as const;
 
 /* ── Page ── */
 

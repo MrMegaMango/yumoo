@@ -8,8 +8,8 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="flex min-h-0 flex-1 flex-col gap-4">
         <div className="shrink-0">
-          <p className="text-sm font-medium text-cocoa">Yumoo</p>
-          <h1 className="mt-4 max-w-[340px] font-headline text-[2.75rem] font-bold leading-[1.05] tracking-tight text-ink">
+          <p className="font-headline text-lg font-bold tracking-wide text-ink">Yumoo</p>
+          <h1 className="mt-4 max-w-[340px] text-[2.75rem] font-semibold leading-[1.05] tracking-tight text-ink">
             A Scrapbook For How Life Tastes Today
           </h1>
           <p className="mt-5 max-w-xs text-[15px] leading-7 text-cocoa">

@@ -1,10 +1,9 @@
 export const mealTypes = [
-  "🥬 go green",
-  "🍰 sweet treat",
-  "🏡 homemade",
-  "🍜 comfort bowl",
-  "🔥 street food",
-  "✨ bougie bite"
+  "🥬 Go Green",
+  "🍰 Sweet Treat",
+  "🏡 Homemade",
+  "🔥 Street Food",
+  "✨ Bougie Bite"
 ] as const;
 
 export type MealType = (typeof mealTypes)[number] | (string & {});
