@@ -360,32 +360,114 @@ function MonthAlbum({
   );
 }
 
-/* ── Sketch frame SVG for empty slots ── */
+/* ── Sketched illustrations for empty slots ── */
 
-function SketchFrame({ className }: { className?: string }) {
+function SketchCamera({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 150" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M4 8 C2 3, 8 1, 14 2 L106 4 C112 3, 118 6, 117 12 L115 138 C116 144, 112 148, 106 147 L12 146 C6 147, 2 143, 3 137 Z"
-        stroke="#D4BCA8"
-        strokeWidth="1.5"
-        strokeDasharray="6 4"
+        d="M8 16 C7 14, 9 12, 12 12 L16 12 L18 9 C19 8, 20 8, 21 8 L27 8 C28 8, 29 8, 30 9 L32 12 L36 12 C39 12, 41 14, 40 16 L39 34 C40 37, 38 39, 35 38 L13 38 C10 39, 8 37, 9 34 Z"
+        stroke="#C4A882"
+        strokeWidth="1.2"
         strokeLinecap="round"
-        fill="none"
-        opacity="0.5"
+        strokeLinejoin="round"
+        opacity="0.35"
+      />
+      <circle cx="24" cy="24" r="7" stroke="#C4A882" strokeWidth="1" opacity="0.3" />
+      <circle cx="24" cy="24" r="4" stroke="#C4A882" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.2" />
+      <circle cx="34" cy="15" r="1.5" fill="#C4A882" opacity="0.2" />
+    </svg>
+  );
+}
+
+function SketchBowl({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M8 22 C8 22, 10 34, 24 36 C38 34, 40 22, 40 22"
+        stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" opacity="0.35"
+      />
+      <path d="M6 22 L42 22" stroke="#C4A882" strokeWidth="1" strokeLinecap="round" opacity="0.3" />
+      <path d="M14 18 C14 14, 18 12, 18 12" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
+      <path d="M22 16 C22 12, 24 10, 24 10" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
+      <path d="M30 18 C30 14, 32 13, 32 13" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
+      <ellipse cx="24" cy="27" rx="10" ry="3" stroke="#C4A882" strokeWidth="0.6" strokeDasharray="2 3" opacity="0.15" />
+    </svg>
+  );
+}
+
+function SketchCoffee({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12 18 L14 36 C14 38, 16 40, 20 40 L28 40 C32 40, 34 38, 34 36 L36 18"
+        stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"
+      />
+      <path d="M10 18 L38 18" stroke="#C4A882" strokeWidth="1" strokeLinecap="round" opacity="0.3" />
+      <path
+        d="M36 22 C40 22, 42 24, 42 28 C42 32, 40 34, 36 34"
+        stroke="#C4A882" strokeWidth="1" strokeLinecap="round" opacity="0.25"
+      />
+      <path d="M18 14 C18 10, 20 8, 20 8" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
+      <path d="M26 12 C26 9, 28 7, 28 7" stroke="#C4A882" strokeWidth="0.8" strokeLinecap="round" opacity="0.2" />
+      <ellipse cx="12" cy="42" rx="14" ry="1.5" fill="#C4A882" opacity="0.06" />
+    </svg>
+  );
+}
+
+function SketchToast({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M10 18 C10 10, 16 6, 24 6 C32 6, 38 10, 38 18 L38 38 C38 40, 36 42, 34 42 L14 42 C12 42, 10 40, 10 38 Z"
+        stroke="#C4A882" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"
       />
       <path
-        d="M14 16 C12 13, 16 11, 20 12 L100 14 C104 13, 108 16, 107 20 L105 120 C106 124, 103 127, 99 126 L19 125 C15 126, 12 123, 13 119 Z"
-        stroke="#D4BCA8"
-        strokeWidth="1"
-        strokeDasharray="4 5"
+        d="M16 22 C16 18, 20 16, 24 16 C28 16, 32 18, 32 22 L32 32 L16 32 Z"
+        stroke="#C4A882" strokeWidth="0.8" strokeDasharray="2 3" strokeLinecap="round" opacity="0.2"
+      />
+      <circle cx="22" cy="26" r="1" fill="#C4A882" opacity="0.15" />
+      <circle cx="26" cy="24" r="0.8" fill="#C4A882" opacity="0.12" />
+      <circle cx="24" cy="28" r="0.6" fill="#C4A882" opacity="0.1" />
+    </svg>
+  );
+}
+
+const slotIllustrations = [SketchCamera, SketchBowl, SketchCoffee, SketchCamera, SketchToast, SketchCoffee, SketchCamera];
+
+/* ── Sketched tiny star ── */
+
+function SketchStar({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className={className} style={style} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M8 1 L9.5 5.5 L14 6.5 L10.5 9.5 L11.5 14 L8 11.5 L4.5 14 L5.5 9.5 L2 6.5 L6.5 5.5 Z"
+        stroke="#D4B88C"
+        strokeWidth="0.8"
         strokeLinecap="round"
+        strokeLinejoin="round"
         fill="none"
         opacity="0.3"
       />
     </svg>
   );
 }
+
+/* ── Deckled edge for empty card (left + bottom) ── */
+
+const deckledCard = `polygon(
+  3% 0%, 100% 0%, 100% 97%,
+  97% 99%, 95% 97%, 92% 100%, 90% 98%, 87% 99%, 85% 97%, 82% 100%, 80% 98%,
+  77% 99%, 75% 97%, 72% 100%, 70% 98%, 67% 99%, 65% 97%, 62% 100%, 60% 98%,
+  57% 99%, 55% 97%, 52% 100%, 50% 98%, 47% 99%, 45% 97%, 42% 100%, 40% 98%,
+  37% 99%, 35% 97%, 32% 100%, 30% 98%, 27% 99%, 25% 97%, 22% 100%, 20% 98%,
+  17% 99%, 15% 97%, 12% 100%, 10% 98%, 7% 99%, 5% 97%, 2% 100%, 0% 98%,
+  0% 97%, 2% 95%, 0% 92%, 2% 90%, 0% 87%, 2% 85%, 0% 82%, 2% 80%,
+  0% 77%, 2% 75%, 0% 72%, 2% 70%, 0% 67%, 2% 65%, 0% 62%, 2% 60%,
+  0% 57%, 2% 55%, 0% 52%, 2% 50%, 0% 47%, 2% 45%, 0% 42%, 2% 40%,
+  0% 37%, 2% 35%, 0% 32%, 2% 30%, 0% 27%, 2% 25%, 0% 22%, 2% 20%,
+  0% 17%, 2% 15%, 0% 12%, 2% 10%, 0% 7%, 2% 5%, 0% 2%, 3% 0%
+)`;
 
 /* ── Scattered mini stars decoration ── */
 
@@ -484,11 +566,11 @@ function WeekSpread({ week }: { week: WeekGroup }) {
             </div>
 
             <div className="mt-1.5 px-1">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-cocoa/40">
-                {dayLabels[dayIndex]} {dayNum}
+              <p className="font-display text-[10px] lowercase tracking-[0.18em] text-cocoa/60">
+                {dayLabels[dayIndex].toLowerCase()} {dayNum}
               </p>
-              <p className="mt-0.5 truncate text-[12px] font-semibold text-ink">
-                {entry.caption || entry.mood || "Meal"}
+              <p className="mt-0.5 truncate font-display text-[12px] lowercase text-ink">
+                {(entry.caption || entry.mood || "meal").toLowerCase()}
               </p>
             </div>
 
@@ -509,7 +591,7 @@ function WeekSpread({ week }: { week: WeekGroup }) {
       );
     }
 
-    // Sketch frame empty slot
+    // Deckled paper empty slot
     return (
       <div
         className="relative"
@@ -518,13 +600,44 @@ function WeekSpread({ week }: { week: WeekGroup }) {
           translate: `${layout.xOff}px ${layout.yOff}px`,
         }}
       >
-        <SketchFrame className="h-auto w-full" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl text-cocoa/15">📷</span>
-          <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.15em] text-cocoa/30">
-            {dayLabels[dayIndex]} {dayNum}
-          </p>
-          <p className="mt-0.5 text-[10px] text-cocoa/20">waiting for art</p>
+        <div
+          className="relative overflow-hidden p-3 pb-7"
+          style={{
+            background: "linear-gradient(170deg, #FFF9F0 0%, #FFF3E4 50%, #FFEDD8 100%)",
+            clipPath: deckledCard,
+            boxShadow: "2px 3px 12px rgba(107,88,78,0.08)",
+          }}
+        >
+          {/* Paper grain */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+            }}
+          />
+
+          {/* Sketched illustration + stars inside */}
+          <div className="flex aspect-[4/5] flex-col items-center justify-center">
+            {(() => { const Illust = slotIllustrations[dayIndex]; return <Illust className="h-14 w-14" />; })()}
+            <SketchStar
+              className="absolute h-4 w-4"
+              style={{ top: "12%", right: "14%", rotate: "12deg" }}
+            />
+            <SketchStar
+              className="absolute h-3 w-3"
+              style={{ bottom: "28%", left: "10%", rotate: "-18deg" }}
+            />
+          </div>
+
+          {/* Day label + text — lowercase serif style */}
+          <div className="mt-1 px-0.5">
+            <p className="font-display text-[10px] lowercase tracking-[0.18em] text-cocoa/70">
+              {dayLabels[dayIndex].toLowerCase()} {dayNum}
+            </p>
+            <p className="mt-0.5 font-display text-[10px] lowercase italic tracking-[0.12em] text-cocoa/45">
+              waiting for art
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -561,7 +674,7 @@ function WeekSpread({ week }: { week: WeekGroup }) {
 
         <div className="relative px-5 py-6">
           {/* Week header */}
-          <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-cocoa/40">
+          <p className="mb-4 text-center font-display text-xs lowercase tracking-[0.2em] text-cocoa/60">
             {formatWeekRange(week.weekStart)}
           </p>
 
@@ -629,7 +742,26 @@ export default function MyPagesPage() {
       title="My Pages"
       subtitle="A quiet collection of your inner appetite."
       headerTrailing={
-        <Tag active>{ready ? `${entries.length} meals` : "..."}</Tag>
+        <div className="relative" style={{ rotate: "8deg" }}>
+          {/* Paperclip holding the tag */}
+          <span className="absolute -left-3 -top-3 z-10 text-lg text-cocoa/30" style={{ rotate: "-15deg" }}>📎</span>
+          {/* Stitched tag */}
+          <div
+            className="rounded-[8px] border border-[#D4BCA8]/50 px-3 py-1.5"
+            style={{
+              background: "linear-gradient(135deg, #F5E6D0, #EDD8C0)",
+              boxShadow: "1px 2px 6px rgba(107,88,78,0.1)",
+            }}
+          >
+            {/* Stitching effect */}
+            <div
+              className="pointer-events-none absolute inset-[3px] rounded-[6px] border border-dashed border-[#C4A882]/30"
+            />
+            <p className="relative font-display text-[11px] lowercase italic tracking-[0.12em] text-ink/70">
+              {ready ? `${entries.length} meals` : "..."}
+            </p>
+          </div>
+        </div>
       }
     >
       {/* Tab switcher */}
