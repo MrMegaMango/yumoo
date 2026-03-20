@@ -103,7 +103,7 @@ export function EntryForm({
               Photo
             </p>
             <p className="mt-1 text-sm text-cocoa">
-              Your meal gets an art makeover that feels like your mood.
+              Your meal gets an illustrated makeover that reflects your mood.
             </p>
           </div>
           <label className={buttonClasses("secondary", "cursor-pointer")}>
@@ -367,7 +367,7 @@ export function EntryForm({
       <div className="flex items-start gap-3 px-1 py-2 text-sm leading-6 text-cocoa/60">
         <span className="text-base">🔒</span>
         <p>
-          <span className="font-semibold text-cocoa/80">Your private vault</span> — nothing leaves this device unless you say so.
+          <span className="font-semibold text-cocoa/80">Your private vault</span> — entries stay in local storage, and Yumoo sends a compressed copy of the photo to your server route only when generating art.
         </p>
       </div>
 

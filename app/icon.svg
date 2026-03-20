@@ -1,19 +1,21 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="132" fill="url(#paint0_linear_1_3)"/>
-  <rect x="74" y="74" width="364" height="364" rx="96" fill="#FFFDFB" fill-opacity="0.82"/>
-  <path d="M156 202C156 170.52 181.52 145 213 145H299C330.48 145 356 170.52 356 202V209H156V202Z" fill="#FFD7BC"/>
-  <rect x="146" y="209" width="220" height="146" rx="73" fill="#8F6F63"/>
-  <circle cx="256" cy="269" r="78" fill="#FFF1DA"/>
-  <circle cx="220" cy="254" r="23" fill="#FFC9A9"/>
-  <circle cx="287" cy="234" r="19" fill="#F6A8A6"/>
-  <circle cx="300" cy="292" r="27" fill="#B9D7A5"/>
-  <path d="M178 343C208 318.333 235.667 306 261 306C286.333 306 311.667 318.333 337 343" stroke="#FFFDFB" stroke-width="24" stroke-linecap="round"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="132" fill="url(#grad)"/>
+  <!-- Bowl rim -->
+  <circle cx="256" cy="256" r="210" fill="#7A5048"/>
+  <!-- Bowl interior -->
+  <circle cx="256" cy="256" r="172" fill="#FDECD8"/>
+  <!-- Egg white -->
+  <ellipse cx="252" cy="250" rx="106" ry="96" fill="#FFFCF8"/>
+  <!-- Yolk -->
+  <circle cx="252" cy="248" r="58" fill="#FFAE2E"/>
+  <!-- Yolk highlight -->
+  <circle cx="232" cy="228" r="16" fill="#FFD070" fill-opacity="0.7"/>
   <defs>
-    <linearGradient id="paint0_linear_1_3" x1="41" y1="39.5" x2="468" y2="474.5" gradientUnits="userSpaceOnUse">
+    <linearGradient id="grad" x1="41" y1="39.5" x2="468" y2="474.5" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFF7F0"/>
       <stop offset="0.5" stop-color="#FFE4D0"/>
       <stop offset="1" stop-color="#F7D8B7"/>
     </linearGradient>
   </defs>
 </svg>
-

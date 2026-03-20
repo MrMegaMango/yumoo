@@ -67,13 +67,28 @@ export default function EntryDetailPage({
       </Card>
 
       <div className="flex gap-3">
-        <Button className="flex-1" variant="secondary" onClick={() => retryArt(currentEntry.id)}>
-          Retry art
+        <Button
+          className="flex-1"
+          variant="secondary"
+          onClick={() => retryArt(currentEntry.id)}
+          disabled={currentEntry.art.status === "queued"}
+        >
+          {currentEntry.art.status === "queued"
+            ? "Generating art..."
+            : currentEntry.art.status === "failed"
+              ? "Retry art"
+              : "Regenerate art"}
         </Button>
         <Button className="flex-1" variant="danger" onClick={handleDelete}>
           Delete
         </Button>
       </div>
+
+      {currentEntry.art.status === "failed" && currentEntry.art.error ? (
+        <Card className="border-[#E8BCB7] bg-[#FFF3F1] text-sm text-[#8F403E]">
+          {currentEntry.art.error}
+        </Card>
+      ) : null}
 
       <EntryForm mode="edit" existingEntry={currentEntry} />
     </AppShell>

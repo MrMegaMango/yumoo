@@ -1,4 +1,4 @@
-import type { EntryArt } from "@/lib/types";
+import type { ArtJobResult, EntryArt } from "@/lib/types";
 
 const paletteBank: [string, string, string][] = [
   ["#FFE5CC", "#F5B59A", "#8E6856"],
@@ -9,7 +9,8 @@ const paletteBank: [string, string, string][] = [
   ["#FEE2CD", "#F3B58C", "#6B7FA3"]
 ];
 
-export const MOCK_ART_DELAY_MS = 1400;
+export const ART_PROMPT_VERSION = "yumoo-openai-edit-v1";
+export const ART_STYLE_VERSION = "storybook-sticker-v2";
 
 function hashSeed(seed: string) {
   return seed.split("").reduce((total, character) => total + character.charCodeAt(0), 0);
@@ -21,33 +22,46 @@ export function pickPalette(seed: string): [string, string, string] {
 
 export function createQueuedArt(seed: string, updatedAt: string): EntryArt {
   return {
+    jobId: crypto.randomUUID(),
     status: "queued",
-    promptVersion: "yumoo-soft-v1",
-    styleVersion: "storybook-v1",
+    promptVersion: ART_PROMPT_VERSION,
+    styleVersion: ART_STYLE_VERSION,
     palette: pickPalette(seed),
+    imageDataUrl: undefined,
+    provider: undefined,
+    model: undefined,
     updatedAt
   };
 }
 
-export function createReadyArt(art: EntryArt, updatedAt: string): EntryArt {
+export function createReadyArt(
+  art: EntryArt,
+  updatedAt: string,
+  result: ArtJobResult
+): EntryArt {
   return {
     ...art,
     status: "ready",
-    provider: "local-placeholder",
-    model: "storybook-v1",
+    imageDataUrl: result.imageDataUrl,
+    provider: result.provider,
+    model: result.model,
     updatedAt,
-    metadata: {
-      renderStyle: "gradient-collage"
-    }
+    metadata: result.metadata,
+    error: undefined
   };
 }
 
-export function createFailedArt(art: EntryArt, updatedAt: string): EntryArt {
+export function createFailedArt(
+  art: EntryArt,
+  updatedAt: string,
+  error = "Cute art generation did not finish."
+): EntryArt {
   return {
     ...art,
     status: "failed",
+    imageDataUrl: undefined,
     updatedAt,
-    error: "Cute art generation did not finish."
+    error
   };
 }
 
@@ -60,4 +74,3 @@ export function paletteBackground(palette: [string, string, string]) {
     ].join(", ")
   };
 }
-

@@ -35,7 +35,11 @@ export function RecapPoster({
                 key={entry.id}
                 className="relative overflow-hidden rounded-[26px] border border-white/70 p-4 shadow-card"
                 style={{
-                  backgroundImage: `linear-gradient(145deg, ${entry.art.palette[0]}, ${entry.art.palette[1]}, ${entry.art.palette[2]})`
+                  backgroundImage: entry.art.imageDataUrl
+                    ? `linear-gradient(180deg, rgba(20,14,12,0.1), rgba(20,14,12,0.32)), url(${entry.art.imageDataUrl})`
+                    : `linear-gradient(145deg, ${entry.art.palette[0]}, ${entry.art.palette[1]}, ${entry.art.palette[2]})`,
+                  backgroundPosition: "center",
+                  backgroundSize: "cover"
                 }}
               >
                 <div className="rounded-[18px] bg-white/28 p-3 backdrop-blur">
@@ -56,4 +60,3 @@ export function RecapPoster({
     </Card>
   );
 }
-

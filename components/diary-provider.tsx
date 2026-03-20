@@ -10,9 +10,9 @@ import {
 } from "react";
 
 import {
+  createFailedArt,
   createQueuedArt,
-  createReadyArt,
-  MOCK_ART_DELAY_MS
+  createReadyArt
 } from "@/lib/art";
 import {
   createEmptyStore,
@@ -22,7 +22,13 @@ import {
 } from "@/lib/diary";
 import { compressImageFile } from "@/lib/image";
 import { toLocalDateString } from "@/lib/date";
-import type { DiaryStore, MealEntry, SaveEntryInput } from "@/lib/types";
+import type {
+  ArtJobInput,
+  ArtJobResult,
+  DiaryStore,
+  MealEntry,
+  SaveEntryInput
+} from "@/lib/types";
 
 type DiaryContextValue = {
   ready: boolean;
@@ -35,11 +41,15 @@ type DiaryContextValue = {
   clearAll: () => void;
 };
 
+type ArtGenerationError = {
+  error?: string;
+};
+
 const DiaryContext = createContext<DiaryContextValue | null>(null);
 
 export function DiaryProvider({ children }: { children: ReactNode }) {
   const [store, setStore] = useState<DiaryStore | null>(null);
-  const timers = useRef(new Map<string, number>());
+  const requests = useRef(new Map<string, AbortController>());
 
   useEffect(() => {
     const saved = parseStore(window.localStorage.getItem(STORAGE_KEY));
@@ -60,56 +70,136 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     }
 
     for (const entry of store.entries) {
-      if (entry.art.status !== "queued" || timers.current.has(entry.id)) {
+      if (entry.art.status !== "queued" || requests.current.has(entry.id)) {
         continue;
       }
 
-      const timeoutId = window.setTimeout(() => {
-        setStore((current) => {
-          if (!current) {
-            return current;
-          }
-
-          return {
-            ...current,
-            entries: current.entries.map((item) => {
-              if (item.id !== entry.id || item.art.status !== "queued") {
-                return item;
-              }
-
-              return {
-                ...item,
-                art: createReadyArt(item.art, new Date().toISOString())
-              };
-            })
-          };
-        });
-
-        timers.current.delete(entry.id);
-      }, MOCK_ART_DELAY_MS + Math.round(Math.random() * 900));
-
-      timers.current.set(entry.id, timeoutId);
+      const controller = new AbortController();
+      requests.current.set(entry.id, controller);
+      void requestArtGeneration(entry, controller);
     }
 
-    for (const [entryId, timeoutId] of timers.current.entries()) {
+    for (const [entryId, controller] of requests.current.entries()) {
       const stillQueued = store.entries.some(
         (entry) => entry.id === entryId && entry.art.status === "queued"
       );
 
       if (!stillQueued) {
-        window.clearTimeout(timeoutId);
-        timers.current.delete(entryId);
+        controller.abort();
+        requests.current.delete(entryId);
       }
     }
   }, [store]);
 
   useEffect(() => {
     return () => {
-      for (const timeoutId of timers.current.values()) {
-        window.clearTimeout(timeoutId);
+      for (const controller of requests.current.values()) {
+        controller.abort();
       }
+
+      requests.current.clear();
     };
   }, []);
+
+  async function requestArtGeneration(
+    entry: MealEntry,
+    controller: AbortController
+  ) {
+    const payload: ArtJobInput = {
+      entryId: entry.id,
+      userId: entry.userId,
+      photoDataUrl: entry.photoDataUrl,
+      caption: entry.caption,
+      mood: entry.mood,
+      mealType: entry.mealType,
+      promptVersion: entry.art.promptVersion,
+      styleVersion: entry.art.styleVersion
+    };
+    const expectedJobId = entry.art.jobId;
+
+    try {
+      const response = await fetch("/api/art/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as
+          | ArtGenerationError
+          | null;
+        throw new Error(errorBody?.error ?? "Cute art generation did not finish.");
+      }
+
+      const result = (await response.json()) as ArtJobResult;
+      const timestamp = new Date().toISOString();
+
+      setStore((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          entries: current.entries.map((item) => {
+            if (
+              item.id !== entry.id ||
+              item.art.status !== "queued" ||
+              item.art.jobId !== expectedJobId
+            ) {
+              return item;
+            }
+
+            return {
+              ...item,
+              art: createReadyArt(item.art, timestamp, result)
+            };
+          })
+        };
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Cute art generation did not finish.";
+      const timestamp = new Date().toISOString();
+
+      setStore((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          entries: current.entries.map((item) => {
+            if (
+              item.id !== entry.id ||
+              item.art.status !== "queued" ||
+              item.art.jobId !== expectedJobId
+            ) {
+              return item;
+            }
+
+            return {
+              ...item,
+              art: createFailedArt(item.art, timestamp, message)
+            };
+          })
+        };
+      });
+    } finally {
+      if (requests.current.get(entry.id) === controller) {
+        requests.current.delete(entry.id);
+      }
+    }
+  }
 
   async function saveEntry(input: SaveEntryInput, existingId?: string) {
     const currentStore = store ?? createEmptyStore();
@@ -127,26 +217,38 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       throw new Error("Add a meal photo first.");
     }
 
+    const caption = input.caption.trim();
     const timestamp = new Date().toISOString();
-    const artSeed = `${input.caption}-${input.takenAt}-${existingEntry?.id ?? timestamp}`;
+    const artSeed = `${caption}-${input.takenAt}-${existingEntry?.id ?? timestamp}`;
+    const shouldRefreshArt =
+      !existingEntry ||
+      Boolean(input.photoFile) ||
+      caption !== existingEntry.caption ||
+      input.mood !== existingEntry.mood ||
+      input.mealType !== existingEntry.mealType;
+
+    if (existingEntry && shouldRefreshArt) {
+      abortArtRequest(existingEntry.id);
+    }
+
     const nextEntry: MealEntry = existingEntry
       ? {
           ...existingEntry,
-          caption: input.caption.trim(),
+          caption,
           mood: input.mood,
           mealType: input.mealType,
           takenAt: input.takenAt,
           localDate: toLocalDateString(input.takenAt),
           photoDataUrl,
           updatedAt: timestamp,
-          art: input.photoFile
+          art: shouldRefreshArt
             ? createQueuedArt(artSeed, timestamp)
             : { ...existingEntry.art, updatedAt: timestamp }
         }
       : {
           id: crypto.randomUUID(),
           userId: currentStore.guestId,
-          caption: input.caption.trim(),
+          caption,
           mood: input.mood,
           mealType: input.mealType,
           takenAt: input.takenAt,
@@ -172,7 +274,20 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     return nextEntry;
   }
 
+  function abortArtRequest(id: string) {
+    const controller = requests.current.get(id);
+
+    if (!controller) {
+      return;
+    }
+
+    controller.abort();
+    requests.current.delete(id);
+  }
+
   function deleteEntry(id: string) {
+    abortArtRequest(id);
+
     setStore((current) => {
       if (!current) {
         return current;
@@ -186,6 +301,8 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   }
 
   function retryArt(id: string) {
+    abortArtRequest(id);
+
     setStore((current) => {
       if (!current) {
         return current;
@@ -208,6 +325,10 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   }
 
   function clearAll() {
+    for (const entryId of Array.from(requests.current.keys())) {
+      abortArtRequest(entryId);
+    }
+
     window.localStorage.removeItem(STORAGE_KEY);
     setStore(createEmptyStore());
   }

@@ -22,6 +22,15 @@ export function ArtTile({
   className?: string;
 }) {
   const backgroundStyle = paletteBackground(entry.art.palette) as CSSProperties;
+  const artImageUrl =
+    entry.art.status === "ready" ? entry.art.imageDataUrl : undefined;
+  const statusLabel =
+    entry.art.status === "ready"
+      ? "Art ready"
+      : entry.art.status === "failed"
+        ? "Retry art"
+        : "Generating art";
+  const captionTextColor = artImageUrl ? "text-white" : "text-ink";
 
   return (
     <div
@@ -30,12 +39,26 @@ export function ArtTile({
         sizeClasses[size],
         className
       )}
-      style={backgroundStyle}
+      style={artImageUrl ? undefined : backgroundStyle}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.45),transparent_45%)]" />
+      {artImageUrl ? (
+        <img
+          src={artImageUrl}
+          alt={entry.mood ? `${entry.mood} illustrated meal art` : "Illustrated meal art"}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
+      <div
+        className={cx(
+          "absolute inset-0",
+          artImageUrl
+            ? "bg-[linear-gradient(180deg,rgba(20,14,12,0.12),rgba(20,14,12,0.08)_35%,rgba(20,14,12,0.44)_100%)]"
+            : "bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.45),transparent_45%)]"
+        )}
+      />
       <div className="absolute left-4 top-4">
         <Tag active={entry.art.status === "ready"}>
-          {entry.art.status === "ready" ? "Art ready" : entry.art.status === "failed" ? "Retry me" : "Cute art brewing"}
+          {statusLabel}
         </Tag>
       </div>
       {size !== "sm" ? (
@@ -46,8 +69,15 @@ export function ArtTile({
         />
       ) : null}
       {showCaption ? (
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white/85 via-white/30 to-transparent p-4">
-          <p className="line-clamp-2 text-sm font-semibold text-ink">
+        <div
+          className={cx(
+            "absolute inset-x-0 bottom-0 p-4",
+            artImageUrl
+              ? "bg-gradient-to-t from-black/45 via-black/10 to-transparent"
+              : "bg-gradient-to-t from-white/85 via-white/30 to-transparent"
+          )}
+        >
+          <p className={cx("line-clamp-2 text-sm font-semibold", captionTextColor)}>
             {entry.mood || entry.caption || "Meal"}
           </p>
         </div>
@@ -55,4 +85,3 @@ export function ArtTile({
     </div>
   );
 }
-

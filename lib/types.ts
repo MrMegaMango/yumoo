@@ -16,25 +16,28 @@ export type ArtStatus = "queued" | "ready" | "failed";
 export type ArtJobInput = {
   entryId: string;
   userId: string;
-  sourcePath: string;
+  photoDataUrl: string;
+  caption: string;
+  mood?: Mood;
+  mealType?: MealType;
   promptVersion: string;
   styleVersion: string;
 };
 
 export type ArtJobResult = {
-  artPath: string;
-  thumb256Path: string;
-  thumb64Path: string;
+  imageDataUrl: string;
   provider: string;
   model: string;
   metadata?: Record<string, unknown>;
 };
 
 export type EntryArt = {
+  jobId: string;
   status: ArtStatus;
   promptVersion: string;
   styleVersion: string;
   palette: [string, string, string];
+  imageDataUrl?: string;
   provider?: string;
   model?: string;
   updatedAt: string;
@@ -70,4 +73,3 @@ export type SaveEntryInput = {
   photoFile?: File | null;
   photoDataUrl?: string;
 };
-

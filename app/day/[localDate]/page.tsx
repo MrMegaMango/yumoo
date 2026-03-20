@@ -23,7 +23,7 @@ export default function DayPage({
   return (
     <AppShell
       title={formatFullDate(localDate)}
-      subtitle="Original photo plus cute art placeholder, all in one day stack."
+      subtitle="Original photos and generated art, all tucked into one day stack."
     >
       <div className="flex items-center justify-between">
         <Tag active>{ready ? `${dayEntries.length} entries` : "Loading"}</Tag>

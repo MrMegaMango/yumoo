@@ -61,7 +61,11 @@ export function CalendarGrid({
                       key={entry.id}
                       className="h-7 rounded-[10px] border border-white/70"
                       style={{
-                        backgroundImage: `linear-gradient(135deg, ${entry.art.palette[0]}, ${entry.art.palette[1]}, ${entry.art.palette[2]})`
+                        backgroundImage: entry.art.imageDataUrl
+                          ? `url(${entry.art.imageDataUrl})`
+                          : `linear-gradient(135deg, ${entry.art.palette[0]}, ${entry.art.palette[1]}, ${entry.art.palette[2]})`,
+                        backgroundPosition: "center",
+                        backgroundSize: "cover"
                       }}
                     />
                   ))}
@@ -76,4 +80,3 @@ export function CalendarGrid({
     </div>
   );
 }
-
