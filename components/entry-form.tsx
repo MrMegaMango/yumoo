@@ -132,15 +132,15 @@ export function EntryForm({
                 onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
               />
               <img
-                src="/hero-sticker-book.png"
+                src="/side-pic.png"
                 alt=""
-                className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-15 saturate-50"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20"
               />
               <svg className="relative h-10 w-10 text-cocoa/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
               </svg>
-              <span className="relative mt-2">What&apos;s the vibe today? Snap the food that matches your energy ✨</span>
+              <span className="relative mt-2">Snap a photo, pick your mood, and let&apos;s tuck it away ✨</span>
             </label>
           )}
         </div>
@@ -267,7 +267,7 @@ export function EntryForm({
                   : "bg-white/80 text-cocoa ring-1 ring-[#EAD6C7]"
               )}
             >
-              ✏️ other
+              ✏️ Other
             </button>
           </div>
           {showCustom ? (
@@ -322,7 +322,7 @@ export function EntryForm({
               {daysLeft === 0
                 ? "✨ art recap unlocked let's gooo"
                 : daysLeft >= 6
-                ? `${daysLeft} days to go — your art recap is cooking 🍳`
+                ? `${daysLeft} more entries until your weekly art is ready 🍳`
                 : daysLeft >= 4
                 ? `${daysLeft} days left — the vibes are building 💫`
                 : daysLeft >= 2
