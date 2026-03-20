@@ -74,8 +74,12 @@ export function getCurrentYearMonth() {
 }
 
 export function getYearMonthKey(dateLike: Date | string) {
-  const date = typeof dateLike === "string" ? new Date(`${dateLike}-01`) : dateLike;
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+  if (typeof dateLike === "string") {
+    // Handle both "YYYY-MM" and "YYYY-MM-DD" formats
+    const parts = dateLike.split("-");
+    return `${parts[0]}-${parts[1]}`;
+  }
+  return `${dateLike.getFullYear()}-${pad(dateLike.getMonth() + 1)}`;
 }
 
 export function parseYearMonth(yearMonth: string) {
