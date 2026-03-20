@@ -32,14 +32,11 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="space-y-3 pb-2">
         <p className="text-center text-[13px] leading-6 text-cocoa">
-          your story starts with one bite
+          Your story starts with one bite
         </p>
         <Link href="/entry/new" className={buttonClasses("primary", "w-full")}>
-          Snap today's meal 📸
+          Snap Today's Meal 📸
         </Link>
-        <p className="px-2 text-center text-[13px] leading-6 text-cocoa">
-          Start with one meal now and decide later if you want to save your diary across devices.
-        </p>
       </section>
     </main>
   );
