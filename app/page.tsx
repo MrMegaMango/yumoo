@@ -31,7 +31,7 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="space-y-3 pb-2">
-        <p className="text-center text-sm italic text-cocoa/70">
+        <p className="text-center text-[13px] leading-6 text-cocoa">
           your story starts with one bite
         </p>
         <Link href="/entry/new" className={buttonClasses("primary", "w-full")}>

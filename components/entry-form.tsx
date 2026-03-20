@@ -124,8 +124,13 @@ export function EntryForm({
               className="h-72 w-full object-cover"
             />
           ) : (
-            <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(255,210,186,0.85),_transparent_35%),linear-gradient(180deg,#FFF8F2_0%,#FFEBDC_100%)] px-8 text-center text-sm leading-6 text-cocoa">
-              what&apos;s the vibe today? snap the food that matches your energy ✨
+            <div className="relative flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(255,210,186,0.85),_transparent_35%),linear-gradient(180deg,#FFF8F2_0%,#FFEBDC_100%)] px-8 text-center text-sm leading-6 text-cocoa">
+              <img
+                src="/hero-sticker-book.png"
+                alt=""
+                className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-15 saturate-50"
+              />
+              <span className="relative">what&apos;s the vibe today? snap the food that matches your energy ✨</span>
             </div>
           )}
         </div>
