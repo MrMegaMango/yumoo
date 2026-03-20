@@ -310,7 +310,7 @@ function MonthAlbum({
             {/* Hero illustration as cover art */}
             <div className="relative mx-auto mb-2 overflow-hidden rounded-[12px] border border-[#EAD6C7]/30 bg-white/40">
               <img
-                src="/hero-sticker-book.png"
+                src="/side-pic.png"
                 alt=""
                 className="aspect-square w-full object-contain p-1"
                 style={{ filter: hasEntries ? "none" : "saturate(0.4) opacity(0.5)" }}
@@ -566,10 +566,10 @@ function WeekSpread({ week }: { week: WeekGroup }) {
             </div>
 
             <div className="mt-1.5 px-1">
-              <p className="font-display text-[10px] lowercase tracking-[0.18em] text-cocoa/60">
-                {dayLabels[dayIndex].toLowerCase()} {dayNum}
+              <p className="text-[10px] font-bold tracking-[0.18em] text-cocoa/60">
+                {dayLabels[dayIndex]} {dayNum}
               </p>
-              <p className="mt-0.5 truncate font-display text-[12px] lowercase text-ink">
+              <p className="mt-0.5 truncate text-[12px] text-ink">
                 {(entry.caption || entry.mood || "meal").toLowerCase()}
               </p>
             </div>
@@ -651,10 +651,10 @@ function WeekSpread({ week }: { week: WeekGroup }) {
 
           {/* Day label + text */}
           <div className="mt-1 px-0.5">
-            <p className="font-display text-[10px] lowercase tracking-[0.18em] text-cocoa/70">
-              {dayLabels[dayIndex].toLowerCase()} {dayNum}
+            <p className="text-[10px] font-bold tracking-[0.18em] text-cocoa/70">
+              {dayLabels[dayIndex]} {dayNum}
             </p>
-            <p className="mt-0.5 font-display text-[10px] lowercase italic tracking-[0.12em] text-cocoa/45">
+            <p className="mt-0.5 text-[10px] italic tracking-[0.12em] text-cocoa/45">
               waiting for art
             </p>
           </div>
@@ -694,7 +694,7 @@ function WeekSpread({ week }: { week: WeekGroup }) {
 
         <div className="relative px-5 py-6">
           {/* Week header */}
-          <p className="mb-4 text-center font-display text-xs lowercase tracking-[0.2em] text-cocoa/60">
+          <p className="mb-4 text-center text-xs font-bold tracking-[0.2em] text-cocoa/60">
             {formatWeekRange(week.weekStart)}
           </p>
 
@@ -715,9 +715,9 @@ function WeekSpread({ week }: { week: WeekGroup }) {
           {/* Hero illustration as center decoration */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <img
-              src="/hero-sticker-book.png"
+              src="/side-pic.png"
               alt=""
-              className="h-64 w-64 object-contain opacity-[0.12] saturate-50"
+              className="h-64 w-64 object-contain opacity-[0.35] saturate-50"
             />
           </div>
         </div>

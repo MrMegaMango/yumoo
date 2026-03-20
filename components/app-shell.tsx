@@ -40,7 +40,7 @@ export function AppShell({
             "fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2 shadow-lift"
           )}
         >
-          + Log meal
+          + Add a meal
         </Link>
       ) : null}
 
