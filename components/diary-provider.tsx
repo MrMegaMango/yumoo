@@ -16,44 +16,187 @@ import {
 } from "@/lib/art";
 import {
   createEmptyStore,
+  mergeStores,
+  normalizeStoreForGuest,
   parseStore,
   sortEntries,
   STORAGE_KEY
 } from "@/lib/diary";
+import {
+  ensureAnonymousGuestId,
+  fetchGuestDiaryStore,
+  upsertGuestDiaryStore
+} from "@/lib/guest-diary-db";
 import { compressImageFile } from "@/lib/image";
+import {
+  buildAuthCallbackUrl,
+  getSupabaseBrowserClient
+} from "@/lib/supabase-browser";
 import { toLocalDateString } from "@/lib/date";
 import type {
   ArtJobInput,
   ArtJobResult,
   DiaryStore,
+  DiarySyncState,
   MealEntry,
   SaveEntryInput
 } from "@/lib/types";
 
+type AccountStatus = "local" | "guest" | "user";
+
 type DiaryContextValue = {
   ready: boolean;
+  accountEmail: string | null;
+  accountProviders: string[];
+  accountStatus: AccountStatus;
+  cloudEnabled: boolean;
   guestId: string | null;
+  syncError: string | null;
+  syncState: DiarySyncState;
+  upgradeError: string | null;
+  upgradePending: boolean;
   entries: MealEntry[];
   getEntry: (id: string) => MealEntry | undefined;
   saveEntry: (input: SaveEntryInput, existingId?: string) => Promise<MealEntry>;
   deleteEntry: (id: string) => void;
   retryArt: (id: string) => void;
   clearAll: () => void;
+  upgradeWithEmail: (email: string) => Promise<void>;
+  upgradeWithGoogle: () => Promise<void>;
 };
 
 type ArtGenerationError = {
   error?: string;
 };
 
+const REMOTE_PERSIST_DELAY_MS = 450;
+
 const DiaryContext = createContext<DiaryContextValue | null>(null);
 
 export function DiaryProvider({ children }: { children: ReactNode }) {
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [accountProviders, setAccountProviders] = useState<string[]>([]);
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>(
+    getSupabaseBrowserClient() ? "guest" : "local"
+  );
+  const [ready, setReady] = useState(false);
   const [store, setStore] = useState<DiaryStore | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncState, setSyncState] = useState<DiarySyncState>(
+    getSupabaseBrowserClient() ? "connecting" : "local"
+  );
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
+  const [upgradePending, setUpgradePending] = useState(false);
   const requests = useRef(new Map<string, AbortController>());
+  const supabase = useRef(getSupabaseBrowserClient());
+  const mounted = useRef(true);
+  const syncMeta = useRef({
+    guestId: null as string | null,
+    lastPersistedSnapshot: "",
+    persistTimerId: null as number | null,
+    readyForRemoteWrite: false
+  });
 
   useEffect(() => {
-    const saved = parseStore(window.localStorage.getItem(STORAGE_KEY));
-    setStore(saved ?? createEmptyStore());
+    mounted.current = true;
+
+    return () => {
+      mounted.current = false;
+
+      if (syncMeta.current.persistTimerId) {
+        window.clearTimeout(syncMeta.current.persistTimerId);
+      }
+
+      for (const controller of requests.current.values()) {
+        controller.abort();
+      }
+
+      requests.current.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    const client = supabase.current;
+
+    if (!client) {
+      setAccountStatus("local");
+      setAccountEmail(null);
+      setAccountProviders([]);
+      return;
+    }
+
+    const {
+      data: { subscription }
+    } = client.auth.onAuthStateChange(() => {
+      window.setTimeout(() => {
+        void refreshAccountProfile();
+      }, 0);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const localStore = parseStore(window.localStorage.getItem(STORAGE_KEY)) ?? createEmptyStore();
+    const client = supabase.current;
+
+    if (!client) {
+      setStore(localStore);
+      setReady(true);
+      setSyncState("local");
+      return;
+    }
+
+    void (async () => {
+      let guestId: string | null = null;
+
+      try {
+        setSyncState("connecting");
+        guestId = await ensureAnonymousGuestId(client);
+        const remoteStore = await fetchGuestDiaryStore(client, guestId);
+        const mergedStore = mergeStores(localStore, remoteStore, guestId);
+        const remoteSnapshot = remoteStore ? serializeStore(remoteStore) : "";
+        const mergedSnapshot = serializeStore(mergedStore);
+
+        syncMeta.current.guestId = guestId;
+        syncMeta.current.lastPersistedSnapshot = remoteSnapshot;
+        syncMeta.current.readyForRemoteWrite = true;
+
+        if (!mounted.current) {
+          return;
+        }
+
+        setStore(mergedStore);
+        setReady(true);
+        setSyncError(null);
+        setSyncState(remoteSnapshot === mergedSnapshot ? "synced" : "syncing");
+        await refreshAccountProfile();
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Guest diary sync could not start.";
+        const fallbackStore = guestId
+          ? normalizeStoreForGuest(localStore, guestId)
+          : localStore;
+
+        syncMeta.current.guestId = guestId;
+        syncMeta.current.readyForRemoteWrite = false;
+        syncMeta.current.lastPersistedSnapshot = "";
+
+        if (!mounted.current) {
+          return;
+        }
+
+        setStore(fallbackStore);
+        setReady(true);
+        setSyncState("error");
+        setSyncError(message);
+        await refreshAccountProfile();
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -62,7 +205,35 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     }
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  }, [store]);
+
+    const client = supabase.current;
+    const guestId = syncMeta.current.guestId;
+
+    if (!client || !guestId || !syncMeta.current.readyForRemoteWrite) {
+      return;
+    }
+
+    const normalizedStore = normalizeStoreForGuest(store, guestId);
+    const snapshot = serializeStore(normalizedStore);
+
+    if (snapshot === syncMeta.current.lastPersistedSnapshot) {
+      if (syncState === "connecting" || syncState === "syncing") {
+        setSyncState("synced");
+      }
+      return;
+    }
+
+    if (syncMeta.current.persistTimerId) {
+      window.clearTimeout(syncMeta.current.persistTimerId);
+    }
+
+    setSyncState("syncing");
+
+    syncMeta.current.persistTimerId = window.setTimeout(() => {
+      syncMeta.current.persistTimerId = null;
+      void persistRemoteStore(normalizedStore, snapshot);
+    }, REMOTE_PERSIST_DELAY_MS);
+  }, [store, syncState]);
 
   useEffect(() => {
     if (!store) {
@@ -91,15 +262,177 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     }
   }, [store]);
 
-  useEffect(() => {
-    return () => {
-      for (const controller of requests.current.values()) {
-        controller.abort();
+  async function refreshAccountProfile() {
+    const client = supabase.current;
+
+    if (!client) {
+      if (!mounted.current) {
+        return;
       }
 
-      requests.current.clear();
-    };
-  }, []);
+      setAccountStatus("local");
+      setAccountEmail(null);
+      setAccountProviders([]);
+      setUpgradePending(false);
+      return;
+    }
+
+    const { data, error } = await client.auth.getUser();
+
+    if (!mounted.current) {
+      return;
+    }
+
+    if (error) {
+      setUpgradePending(false);
+      setUpgradeError((currentError) => currentError ?? error.message);
+      return;
+    }
+
+    const user = data.user;
+
+    if (!user) {
+      setAccountStatus("guest");
+      setAccountEmail(null);
+      setAccountProviders([]);
+      setUpgradePending(false);
+      return;
+    }
+
+    const providers = Array.from(
+      new Set(
+        [
+          ...(user.identities ?? []).map((identity) => identity.provider),
+          ...(Array.isArray(user.app_metadata?.providers)
+            ? user.app_metadata.providers
+            : [])
+        ].filter((provider): provider is string => Boolean(provider))
+      )
+    ).sort();
+
+    setAccountStatus(user.is_anonymous ? "guest" : "user");
+    setAccountEmail(user.email ?? null);
+    setAccountProviders(providers);
+    setUpgradePending(false);
+
+    if (!user.is_anonymous) {
+      setUpgradeError(null);
+    }
+  }
+
+  async function upgradeWithGoogle() {
+    const client = supabase.current;
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    setUpgradePending(true);
+    setUpgradeError(null);
+
+    const { error } = await client.auth.linkIdentity({
+      provider: "google",
+      options: {
+        redirectTo: buildAuthCallbackUrl("google")
+      }
+    });
+
+    if (error) {
+      const message = error.message;
+
+      if (mounted.current) {
+        setUpgradePending(false);
+        setUpgradeError(message);
+      }
+
+      throw new Error(message);
+    }
+  }
+
+  async function upgradeWithEmail(email: string) {
+    const client = supabase.current;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      throw new Error("Enter a valid email address first.");
+    }
+
+    setUpgradePending(true);
+    setUpgradeError(null);
+
+    try {
+      const { error } = await client.auth.updateUser(
+        { email: normalizedEmail },
+        {
+          emailRedirectTo: buildAuthCallbackUrl("email")
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Email upgrade could not start.";
+
+      if (mounted.current) {
+        setUpgradeError(message);
+      }
+
+      throw new Error(message);
+    } finally {
+      if (mounted.current) {
+        setUpgradePending(false);
+      }
+    }
+  }
+
+  async function persistRemoteStore(nextStore: DiaryStore, snapshot: string) {
+    const client = supabase.current;
+    const guestId = syncMeta.current.guestId;
+
+    if (!client || !guestId) {
+      return;
+    }
+
+    try {
+      const persistedStore = await upsertGuestDiaryStore(client, nextStore, guestId);
+      syncMeta.current.lastPersistedSnapshot = snapshot;
+
+      if (!mounted.current) {
+        return;
+      }
+
+      setSyncError(null);
+      setSyncState("synced");
+
+      setStore((current) => {
+        if (!current) {
+          return current;
+        }
+
+        const currentSnapshot = serializeStore(normalizeStoreForGuest(current, guestId));
+        return currentSnapshot === snapshot ? persistedStore : current;
+      });
+    } catch (error) {
+      if (!mounted.current) {
+        return;
+      }
+
+      setSyncState("error");
+      setSyncError(
+        error instanceof Error
+          ? error.message
+          : "Guest diary sync failed."
+      );
+    }
+  }
 
   async function requestArtGeneration(
     entry: MealEntry,
@@ -202,7 +535,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   }
 
   async function saveEntry(input: SaveEntryInput, existingId?: string) {
-    const currentStore = store ?? createEmptyStore();
+    const currentStore =
+      store ??
+      createEmptyStore(syncMeta.current.guestId ?? undefined);
     const existingEntry = existingId
       ? currentStore.entries.find((entry) => entry.id === existingId)
       : undefined;
@@ -329,8 +664,10 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       abortArtRequest(entryId);
     }
 
+    const nextGuestId = syncMeta.current.guestId ?? store?.guestId;
+
     window.localStorage.removeItem(STORAGE_KEY);
-    setStore(createEmptyStore());
+    setStore(createEmptyStore(nextGuestId ?? undefined));
   }
 
   function getEntry(id: string) {
@@ -340,19 +677,33 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   return (
     <DiaryContext.Provider
       value={{
-        ready: Boolean(store),
+        ready,
+        accountEmail,
+        accountProviders,
+        accountStatus,
+        cloudEnabled: Boolean(syncMeta.current.readyForRemoteWrite),
         guestId: store?.guestId ?? null,
+        syncError,
+        syncState,
+        upgradeError,
+        upgradePending,
         entries: store?.entries ?? [],
         getEntry,
         saveEntry,
         deleteEntry,
         retryArt,
-        clearAll
+        clearAll,
+        upgradeWithEmail,
+        upgradeWithGoogle
       }}
     >
       {children}
     </DiaryContext.Provider>
   );
+}
+
+function serializeStore(store: DiaryStore) {
+  return JSON.stringify(store);
 }
 
 export function useDiary() {

@@ -21,7 +21,19 @@ export function parseStore(rawValue: string | null): DiaryStore | null {
   }
 
   try {
-    const parsed = JSON.parse(rawValue) as DiaryStore;
+    return parseStoreValue(JSON.parse(rawValue));
+  } catch {
+    return null;
+  }
+}
+
+export function parseStoreValue(rawValue: unknown): DiaryStore | null {
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsed = rawValue as DiaryStore;
     if (parsed?.version !== 1 || !Array.isArray(parsed.entries) || typeof parsed.guestId !== "string") {
       return null;
     }
@@ -34,6 +46,49 @@ export function parseStore(rawValue: string | null): DiaryStore | null {
   } catch {
     return null;
   }
+}
+
+export function normalizeStoreForGuest(store: DiaryStore, guestId: string): DiaryStore {
+  return {
+    version: 1,
+    guestId,
+    entries: sortEntries(
+      store.entries.map((entry) => ({
+        ...entry,
+        userId: guestId
+      }))
+    )
+  };
+}
+
+export function mergeStores(
+  localStore: DiaryStore | null,
+  remoteStore: DiaryStore | null,
+  guestId: string
+) {
+  const mergedEntries = new Map<string, MealEntry>();
+
+  for (const sourceStore of [remoteStore, localStore]) {
+    for (const entry of sourceStore?.entries ?? []) {
+      const current = mergedEntries.get(entry.id);
+
+      if (!current || new Date(entry.updatedAt).getTime() >= new Date(current.updatedAt).getTime()) {
+        mergedEntries.set(entry.id, {
+          ...entry,
+          userId: guestId
+        });
+      }
+    }
+  }
+
+  return normalizeStoreForGuest(
+    {
+      version: 1,
+      guestId,
+      entries: Array.from(mergedEntries.values())
+    },
+    guestId
+  );
 }
 
 export function sortEntries(entries: MealEntry[]) {

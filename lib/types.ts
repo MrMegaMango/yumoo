@@ -12,6 +12,12 @@ export const moods = ["😋", "🫠", "😮‍💨", "😍", "🥱"] as const;
 export type Mood = (typeof moods)[number] | (string & {});
 
 export type ArtStatus = "queued" | "ready" | "failed";
+export type DiarySyncState =
+  | "local"
+  | "connecting"
+  | "syncing"
+  | "synced"
+  | "error";
 
 export type ArtJobInput = {
   entryId: string;
