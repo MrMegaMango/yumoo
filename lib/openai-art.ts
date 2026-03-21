@@ -50,7 +50,7 @@ export async function generateArtImage(
       size: SIZE,
       outputFormat: OUTPUT_FORMAT,
       outputCompression: OUTPUT_COMPRESSION,
-      renderStyle: "storybook-sticker-edit"
+      renderStyle: "abstract-expressionism"
     }
   };
 }
@@ -61,24 +61,24 @@ export function isOpenAIArtConfigured() {
 
 function buildMealArtPrompt(input: ArtJobInput) {
   const promptParts = [
-    "Transform the provided meal photo into a whimsical illustrated food portrait.",
-    // "Keep any recognizable ingredients, and overall composition from the source image.",
-    // "Render it as cozy storybook sticker art with soft brush texture, clean shapes, warm pastel color harmony, and polished but clearly illustrated detail.",
-    // "Make the food look appetizing and cute, not photorealistic.",
-    // "Use a simple tidy background that supports the food without distracting from it.",
-    // "Return one finished square image."
+    "Use the provided meal photo purely as a source of color, texture, and emotional tone — not as a literal subject.",
+    "Create a high-level abstract painting inspired by the meal: bold organic shapes, flowing color fields, gestural brushwork, and layered textures.",
+    "Do not depict recognizable food, dishes, utensils, or any representational objects.",
+    "Let the dominant colors and mood of the meal guide a non-figurative composition — think Mark Rothko color fields, abstract expressionism, or lyrical abstraction.",
+    "The result should feel like an emotional impression of the meal, not a portrait of it.",
+    "Return one finished square image."
   ];
 
   if (input.mood) {
-    promptParts.push(`Mood cue: ${input.mood}. Let that mood subtly influence the color and energy.`);
+    promptParts.push(`Emotional tone: ${input.mood}. Let this feeling drive the energy, rhythm, and palette of the composition.`);
   }
 
   if (input.mealType) {
-    promptParts.push(`Vibe tag: ${input.mealType}.`);
+    promptParts.push(`Context: ${input.mealType}. Use this to inform the weight and warmth of the abstraction.`);
   }
 
   if (input.caption.trim()) {
-    promptParts.push(`Meal note: ${input.caption.trim()}.`);
+    promptParts.push(`Inspiration note: ${input.caption.trim()}.`);
   }
 
   return promptParts.join(" ");
