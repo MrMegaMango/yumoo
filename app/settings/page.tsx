@@ -213,7 +213,13 @@ export default function SettingsPage() {
       setEmailNotice(
         `We sent a 6-digit code to ${email.trim().toLowerCase()}. Enter it below to save this diary as an account.`
       );
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.toLowerCase().includes("already been registered") || message.toLowerCase().includes("already registered")) {
+        setSignInEmail(email);
+        setAccountMode("signin");
+        setSignInNotice("Looks like you already have an account. Sign in below to load your diary.");
+      }
       return;
     } finally {
       setUpgradeAction(null);
