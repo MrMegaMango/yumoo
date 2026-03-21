@@ -623,9 +623,13 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     setSignInError(null);
 
     try {
+      const captchaToken = turnstile.configured ? await turnstile.getToken() : null;
       const { error } = await client.auth.signInWithOtp({
         email: normalizedEmail,
-        options: { shouldCreateUser: false }
+        options: {
+          shouldCreateUser: false,
+          ...(captchaToken ? { captchaToken } : {})
+        }
       });
 
       if (error) {
