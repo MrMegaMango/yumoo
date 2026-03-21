@@ -292,7 +292,7 @@ export function EntryForm({
             Date
           </label>
           <input
-            className="field"
+            className="field min-w-0 max-w-full appearance-none"
             type="date"
             value={dateValue}
             onChange={(event) => setDateValue(event.target.value)}
