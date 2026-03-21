@@ -541,17 +541,17 @@ export default function SettingsPage() {
                           inputMode="numeric"
                           autoComplete="one-time-code"
                           placeholder="123456"
-                          maxLength={6}
+                          maxLength={8}
                           value={signInCode}
                           onChange={(event) =>
-                            setSignInCode(event.target.value.replace(/\D+/g, "").slice(0, 6))
+                            setSignInCode(event.target.value.replace(/\D+/g, "").slice(0, 8))
                           }
                           disabled={signInPending}
                         />
                         <Button
                           variant="secondary"
                           type="submit"
-                          disabled={signInPending || signInCode.length !== 6}
+                          disabled={signInPending || signInCode.length < 6}
                         >
                           {signInAction === "verify-code" ? "Signing in…" : "Verify code"}
                         </Button>

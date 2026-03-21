@@ -669,8 +669,8 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       throw new Error("Send a sign-in code to your email first.");
     }
 
-    if (!/^\d{6}$/.test(normalizedCode)) {
-      throw new Error("Enter the 6-digit code from your email.");
+    if (!/^\d{6,8}$/.test(normalizedCode)) {
+      throw new Error("Enter the code from your email.");
     }
 
     setSignInPending(true);
