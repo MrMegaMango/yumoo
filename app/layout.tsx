@@ -4,6 +4,7 @@ import { Fraunces, Nanum_Myeongjo, Plus_Jakarta_Sans } from "next/font/google";
 
 import "@/app/globals.css";
 
+import { Analytics } from "@vercel/analytics/next";
 import { DiaryProvider } from "@/components/diary-provider";
 import { PWAProvider } from "@/components/pwa-provider";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
           <PWAProvider />
           {children}
         </DiaryProvider>
+        <Analytics />
       </body>
     </html>
   );
