@@ -616,6 +616,97 @@ export default function SettingsPage() {
             : "Clear local diary"}
         </Button>
       </Card>
+
+      <FeedbackCard prefillEmail={accountEmail} />
     </AppShell>
+  );
+}
+
+function FeedbackCard({ prefillEmail }: { prefillEmail: string | null }) {
+  const [feedbackEmail, setFeedbackEmail] = useState(prefillEmail ?? "");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [pending, setPending] = useState(false);
+  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (prefillEmail && !feedbackEmail) {
+      setFeedbackEmail(prefillEmail);
+    }
+  }, [prefillEmail]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: feedbackEmail, message: feedbackMessage }),
+      });
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Something went wrong. Please try again.");
+      }
+
+      setFeedbackMessage("");
+      setNotice({ type: "success", text: "Got it — check your inbox for a confirmation." });
+    } catch (err) {
+      setNotice({
+        type: "error",
+        text: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      });
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <Card className="space-y-4">
+      <h2 className="text-xl font-semibold text-ink">Feedback</h2>
+      <p className="text-sm leading-6 text-cocoa">
+        Found a bug or have a suggestion? Send it through and I'll confirm it landed.
+      </p>
+      <form className="grid gap-3" onSubmit={handleSubmit}>
+        <input
+          className="field"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="your@email.com"
+          value={feedbackEmail}
+          onChange={(e) => setFeedbackEmail(e.target.value)}
+          disabled={pending}
+        />
+        <textarea
+          className="field min-h-[120px] resize-none"
+          placeholder="What's on your mind?"
+          maxLength={5000}
+          value={feedbackMessage}
+          onChange={(e) => setFeedbackMessage(e.target.value)}
+          disabled={pending}
+        />
+        <Button
+          type="submit"
+          variant="secondary"
+          disabled={pending || !feedbackEmail.trim() || !feedbackMessage.trim()}
+        >
+          {pending ? "Sending…" : "Send feedback"}
+        </Button>
+      </form>
+      {notice ? (
+        <div
+          className={`rounded-[24px] border p-4 text-sm leading-6 ${
+            notice.type === "success"
+              ? "border-[#D9EAD4] bg-[#F7FFF4] text-[#40624C]"
+              : "border-[#E8BCB7] bg-[#FFF3F1] text-[#8F403E]"
+          }`}
+        >
+          {notice.text}
+        </div>
+      ) : null}
+    </Card>
   );
 }
