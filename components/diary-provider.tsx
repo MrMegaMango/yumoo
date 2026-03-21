@@ -74,6 +74,32 @@ const REMOTE_PERSIST_DELAY_MS = 450;
 
 const DiaryContext = createContext<DiaryContextValue | null>(null);
 
+function getAuthErrorMessage(error: unknown, fallback: string) {
+  if (!error || typeof error !== "object") {
+    return fallback;
+  }
+
+  const candidate = error as {
+    code?: string;
+    message?: string;
+    status?: number;
+  };
+  const message = candidate.message?.trim();
+
+  if (message) {
+    return message;
+  }
+
+  const details = [
+    candidate.code ? `code ${candidate.code}` : null,
+    typeof candidate.status === "number" ? `status ${candidate.status}` : null
+  ].filter(Boolean);
+
+  return details.length > 0
+    ? `${fallback} (${details.join(", ")}).`
+    : fallback;
+}
+
 export function DiaryProvider({ children }: { children: ReactNode }) {
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountProviders, setAccountProviders] = useState<string[]>([]);
@@ -363,7 +389,11 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) {
-      const message = error.message;
+      const message = getAuthErrorMessage(
+        error,
+        "Google linking could not start."
+      );
+      console.error("Supabase Google link failed:", error);
 
       if (mounted.current) {
         setUpgradePending(false);
@@ -401,10 +431,11 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Email upgrade could not start.";
+      const message = getAuthErrorMessage(
+        error,
+        "Email delivery failed. Check Supabase SMTP settings and auth logs."
+      );
+      console.error("Supabase email upgrade failed:", error);
 
       if (mounted.current) {
         setUpgradeError(message);
