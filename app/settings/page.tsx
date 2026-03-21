@@ -286,6 +286,7 @@ export default function SettingsPage() {
     <AppShell
       title="Settings"
       subtitle="Keep your diary private, easy to revisit, and simple to manage."
+      showFab={false}
     >
       {successMessage ? (
         <Card className="space-y-2 border-[#D9EAD4] bg-[#F7FFF4]">
