@@ -19,6 +19,7 @@ npm run typecheck  # TypeScript type check (no test suite exists)
 `DiaryProvider` (`components/diary-provider.tsx`) is the single source of truth. It wraps the entire app and:
 - Hydrates from `localStorage` on mount
 - If Supabase is configured, signs in anonymously and merges local cache with the remote guest diary row
+- When `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is present, requests an invisible Turnstile token before creating a brand-new anonymous guest
 - Exposes `entries`, `saveEntry()`, `deleteEntry()`, `retryArt()`, `clearAll()` via context
 - Exposes account upgrade helpers that link the active anonymous user to Google or email without changing the synced `user_id`
 - Watches for entries with `art.status === "queued"` and POSTs them to `/api/art/generate`
@@ -34,12 +35,16 @@ Every page consumes this context. There is no server-side page data fetching for
 - fetch/upsert for the `guest_diaries` table
 - normalization of the remote store to the authenticated guest id
 
+`lib/turnstile-browser.ts` loads Cloudflare Turnstile explicitly in the browser and exposes a hidden, execute-on-demand token flow for anonymous sign-in.
+
 `/settings` is now a real upgrade surface:
 - guest sessions can call `linkIdentity()` for Google
 - guest sessions can call `updateUser({ email })` to attach an email identity
 - `/auth/callback` waits for the redirected auth state, then returns to settings with a success flag
 
 `/api/art/generate` (`app/api/art/generate/route.ts`) is the only server route currently in active use. It validates the request body and delegates to `lib/openai-art.ts`, which:
+- verifies the attached Supabase session when an access token is present
+- enforces payload limits plus per-IP / per-user / per-entry art quotas from `lib/art-abuse.ts`
 - Uses the official `openai` SDK
 - Converts the stored meal `photoDataUrl` into a `File`
 - Calls `images.edit` with `gpt-image-1-mini`
@@ -90,6 +95,7 @@ MealEntry {
 - Standalone sign-in / recovery UI for returning saved-account users on new devices
 - Replace local cache + JSON diary blob with normalized DB rows + object storage; current browser storage use will grow quickly with generated art
 - Move art generation off the request path if durable jobs / rate limiting / retries are needed
+- Move in-memory art quotas to a shared backing store if strict serverless enforcement is required
 - Recap sharing (currently SVG download only)
 
 ## Environment Variables
@@ -99,11 +105,18 @@ OPENAI_API_KEY               # Required for illustrated art generation
 NEXT_PUBLIC_SUPABASE_URL     # Required for anonymous guest sync
 NEXT_PUBLIC_SUPABASE_ANON_KEY # Optional if you use the legacy key name
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY # Optional if your Vercel integration uses the newer key name
+NEXT_PUBLIC_TURNSTILE_SITE_KEY # Optional; enables invisible Turnstile before new guest creation
+ART_MAX_REQUESTS_PER_IP_PER_HOUR # Optional app-side art burst limit
+ART_MAX_REQUESTS_PER_USER_PER_DAY # Optional app-side daily art cap per diary
+ART_MAX_REQUESTS_PER_ENTRY_PER_HOUR # Optional app-side retry cap per entry
+ART_MAX_PHOTO_BYTES # Optional max accepted photo size after base64 encoding
+ART_MAX_CAPTION_LENGTH # Optional max caption length for art generation
 ```
 
 ## Database
 
 - The guest persistence table lives in `supabase/migrations/20260320_guest_diaries.sql`
+- Security hardening for stale anonymous-user cleanup lives in `supabase/migrations/20260320_guest_security_hardening.sql`
 - Current schema is intentionally simple: one `guest_diaries` row per authenticated guest user, with the full diary stored as JSONB
 - RLS policies restrict reads and writes to `auth.uid() = user_id`
 - Guest-to-user upgrades do not migrate rows; the same auth user id remains attached after Google/email is linked

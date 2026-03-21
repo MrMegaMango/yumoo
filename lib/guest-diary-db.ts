@@ -14,7 +14,12 @@ type GuestDiaryRow = {
   store: unknown;
 };
 
-export async function ensureAnonymousGuestId(client: SupabaseClient) {
+type CaptchaTokenProvider = () => Promise<string | null>;
+
+export async function ensureAnonymousGuestId(
+  client: SupabaseClient,
+  getCaptchaToken?: CaptchaTokenProvider
+) {
   const {
     data: { session }
   } = await client.auth.getSession();
@@ -23,7 +28,16 @@ export async function ensureAnonymousGuestId(client: SupabaseClient) {
     return session.user.id;
   }
 
-  const { data, error } = await client.auth.signInAnonymously();
+  const captchaToken = getCaptchaToken ? await getCaptchaToken() : null;
+  const { data, error } = await client.auth.signInAnonymously(
+    captchaToken
+      ? {
+          options: {
+            captchaToken
+          }
+        }
+      : undefined
+  );
 
   if (error) {
     throw new Error(error.message);

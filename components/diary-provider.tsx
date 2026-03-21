@@ -32,6 +32,7 @@ import {
   buildAuthCallbackUrl,
   getSupabaseBrowserClient
 } from "@/lib/supabase-browser";
+import { useTurnstileToken } from "@/lib/turnstile-browser";
 import { toLocalDateString } from "@/lib/date";
 import type {
   ArtJobInput,
@@ -89,7 +90,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   const [upgradePending, setUpgradePending] = useState(false);
   const requests = useRef(new Map<string, AbortController>());
   const supabase = useRef(getSupabaseBrowserClient());
+  const turnstile = useTurnstileToken();
   const mounted = useRef(true);
+  const initialSyncStarted = useRef(false);
   const syncMeta = useRef({
     guestId: null as string | null,
     lastPersistedSnapshot: "",
@@ -149,12 +152,34 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (initialSyncStarted.current) {
+      return;
+    }
+
     void (async () => {
       let guestId: string | null = null;
 
       try {
         setSyncState("connecting");
-        guestId = await ensureAnonymousGuestId(client);
+        const {
+          data: { session }
+        } = await client.auth.getSession();
+
+        if (!session?.user?.id && turnstile.configured && !turnstile.ready && !turnstile.error) {
+          return;
+        }
+
+        if (initialSyncStarted.current) {
+          return;
+        }
+
+        initialSyncStarted.current = true;
+        guestId =
+          session?.user?.id ??
+          (await ensureAnonymousGuestId(
+            client,
+            turnstile.configured ? turnstile.getToken : undefined
+          ));
         const remoteStore = await fetchGuestDiaryStore(client, guestId);
         const mergedStore = mergeStores(localStore, remoteStore, guestId);
         const remoteSnapshot = remoteStore ? serializeStore(remoteStore) : "";
@@ -197,7 +222,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         await refreshAccountProfile();
       }
     })();
-  }, []);
+  }, [turnstile.configured, turnstile.error, turnstile.ready]);
 
   useEffect(() => {
     if (!store) {
@@ -438,6 +463,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     entry: MealEntry,
     controller: AbortController
   ) {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json"
+    };
     const payload: ArtJobInput = {
       entryId: entry.id,
       userId: entry.userId,
@@ -451,11 +479,21 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     const expectedJobId = entry.art.jobId;
 
     try {
+      const client = supabase.current;
+
+      if (client) {
+        const {
+          data: { session }
+        } = await client.auth.getSession();
+
+        if (session?.access_token) {
+          headers.Authorization = `Bearer ${session.access_token}`;
+        }
+      }
+
       const response = await fetch("/api/art/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers,
         body: JSON.stringify(payload),
         signal: controller.signal
       });
@@ -698,6 +736,13 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {turnstile.configured ? (
+        <div
+          ref={turnstile.containerRef}
+          aria-hidden="true"
+          className="pointer-events-none fixed bottom-0 right-0 h-0 w-0 opacity-0"
+        />
+      ) : null}
     </DiaryContext.Provider>
   );
 }

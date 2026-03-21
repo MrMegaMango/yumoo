@@ -7,6 +7,7 @@ Yumoo is a mobile-first PWA food diary that turns your meals into a beautiful, i
 - Next.js App Router + TypeScript + Tailwind setup
 - Mobile-first routes from the product brief
 - Guest diary sync backed by local cache plus optional Supabase persistence
+- Invisible Turnstile support for new guest creation when Supabase CAPTCHA is enabled
 - Photo upload with client-side compression
 - OpenAI-backed image edit pipeline that turns saved meal photos into illustrated art
 - Month calendar, day detail, entry edit/delete, recap export, and settings screens
@@ -36,10 +37,26 @@ Set `OPENAI_API_KEY` in `.env.local` (and in Vercel for deploys) to enable art g
 To enable persistent guest diaries with Supabase:
 
 1. Set `NEXT_PUBLIC_SUPABASE_URL` and either `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-2. Enable anonymous sign-ins in Supabase Auth.
+2. Enable anonymous sign-ins and manual linking in Supabase Auth.
 3. Add your local and deployed `/auth/callback` URLs to Supabase Auth redirect URLs.
-4. If you want Google upgrades, enable the Google provider and manual linking in Supabase Auth.
+4. If you want Google upgrades, enable the Google provider.
 5. Apply `supabase/migrations/20260320_guest_diaries.sql`.
+6. Apply `supabase/migrations/20260320_guest_security_hardening.sql`.
+7. Tune Supabase Auth rate limits in the dashboard for anonymous sign-ins and other auth endpoints.
+
+To enable low-friction bot protection for new guests:
+
+1. Create a Cloudflare Turnstile widget and keep the Turnstile **secret** in Supabase Auth CAPTCHA settings.
+2. Set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in the app so the browser can request a token.
+3. Leave the secret out of Vercel and the repo; Supabase verifies the token during anonymous sign-in.
+
+To tighten app-side art quotas:
+
+- `ART_MAX_REQUESTS_PER_IP_PER_HOUR` limits bursts from one connection.
+- `ART_MAX_REQUESTS_PER_USER_PER_DAY` caps daily art generations for one diary.
+- `ART_MAX_REQUESTS_PER_ENTRY_PER_HOUR` caps repeated retries on the same entry.
+- `ART_MAX_PHOTO_BYTES` rejects oversized base64 uploads before they hit OpenAI.
+- `ART_MAX_CAPTION_LENGTH` bounds prompt text length.
 
 ## Current tradeoffs
 
@@ -49,6 +66,7 @@ To enable persistent guest diaries with Supabase:
 - Art generation sends a compressed copy of the meal photo through the app's server route to OpenAI.
 - Guest persistence depends on the Supabase anonymous session surviving in the browser; clearing site data will lose access to that guest diary.
 - Settings can now upgrade the active anonymous guest into Google or email, but a separate sign-in screen for returning users is still not built.
+- The app-side art limits are in-memory, so they are best-effort on serverless instances until you add a shared rate-limit store.
 - Recap export is currently an SVG download, which is fast and private but not yet a richer image pipeline.
 
 ## Next build steps
@@ -56,4 +74,5 @@ To enable persistent guest diaries with Supabase:
 1. Replace local photo/art data URLs with private object storage while keeping the diary rows slim.
 2. Normalize the diary schema from one JSON blob into entry rows if you want stronger multi-device conflict handling.
 3. Add a standalone sign-in / account recovery flow for users returning on a new device or after clearing their session.
-4. Add optimistic upload progress, better quota handling, and signed recap sharing.
+4. Move app-side art quotas to a shared store if you need strict cross-instance enforcement.
+5. Add optimistic upload progress, better quota handling, and signed recap sharing.
