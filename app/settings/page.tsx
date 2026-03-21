@@ -22,7 +22,11 @@ function formatProvider(provider: string) {
 export default function SettingsPage() {
   const supabaseConfigured = isSupabaseConfigured();
   const [email, setEmail] = useState("");
+  const [emailCode, setEmailCode] = useState("");
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
+  const [upgradeAction, setUpgradeAction] = useState<
+    "google" | "send-email" | "verify-email" | "resend-email" | null
+  >(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState<
     "account" | "email" | "google" | null
   >(null);
@@ -34,13 +38,17 @@ export default function SettingsPage() {
     cloudEnabled,
     entries,
     guestId,
+    pendingEmailUpgrade,
     ready,
     syncError,
     syncState,
+    cancelEmailUpgrade,
+    resendEmailUpgradeCode,
     upgradeError,
     upgradePending,
     upgradeWithEmail,
-    upgradeWithGoogle
+    upgradeWithGoogle,
+    verifyEmailUpgradeCode
   } = useDiary();
 
   useEffect(() => {
@@ -56,6 +64,25 @@ export default function SettingsPage() {
       method === "email" || method === "google" ? method : "account"
     );
   }, []);
+
+  useEffect(() => {
+    if (!pendingEmailUpgrade) {
+      setEmailCode("");
+      return;
+    }
+
+    setEmail(pendingEmailUpgrade);
+  }, [pendingEmailUpgrade]);
+
+  useEffect(() => {
+    if (accountStatus !== "user") {
+      return;
+    }
+
+    setEmail("");
+    setEmailCode("");
+    setEmailNotice(null);
+  }, [accountStatus]);
 
   function handleClear() {
     let confirmationMessage = "Clear all meals saved on this device?";
@@ -77,26 +104,63 @@ export default function SettingsPage() {
 
   async function handleGoogleUpgrade() {
     setEmailNotice(null);
+    setUpgradeAction("google");
 
     try {
       await upgradeWithGoogle();
     } catch {
       return;
+    } finally {
+      setUpgradeAction(null);
     }
   }
 
   async function handleEmailUpgrade(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setEmailNotice(null);
+    setUpgradeAction("send-email");
 
     try {
       await upgradeWithEmail(email);
-      setEmail("");
       setEmailNotice(
-        "Check your inbox, confirm the email, and this same diary will come back as a saved account."
+        `We sent a 6-digit code to ${email.trim().toLowerCase()}. Enter it below to save this diary as an account.`
       );
     } catch {
       return;
+    } finally {
+      setUpgradeAction(null);
+    }
+  }
+
+  async function handleVerifyEmailCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setEmailNotice(null);
+    setUpgradeAction("verify-email");
+
+    try {
+      await verifyEmailUpgradeCode(emailCode);
+      setUpgradeSuccess("email");
+      setEmailCode("");
+    } catch {
+      return;
+    } finally {
+      setUpgradeAction(null);
+    }
+  }
+
+  async function handleResendEmailCode() {
+    setEmailNotice(null);
+    setUpgradeAction("resend-email");
+
+    try {
+      await resendEmailUpgradeCode();
+      if (pendingEmailUpgrade) {
+        setEmailNotice(`A fresh 6-digit code is on the way to ${pendingEmailUpgrade}.`);
+      }
+    } catch {
+      return;
+    } finally {
+      setUpgradeAction(null);
     }
   }
 
@@ -216,31 +280,82 @@ export default function SettingsPage() {
           <>
             <p className="text-sm leading-6 text-cocoa">
               Upgrade this anonymous diary without losing its entries. The same synced row stays in
-              place, but it becomes tied to Google or an email identity instead of a guest-only session.
+              place, but it becomes tied to Google or a verified email code instead of a guest-only session.
             </p>
             <div className="grid gap-3">
               <Button onClick={handleGoogleUpgrade} disabled={upgradePending}>
-                {upgradePending ? "Opening Google…" : "Link Google"}
+                {upgradeAction === "google" ? "Opening Google…" : "Link Google"}
               </Button>
-              <form className="grid gap-3" onSubmit={handleEmailUpgrade}>
-                <input
-                  className="field"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  disabled={upgradePending}
-                />
-                <Button
-                  variant="secondary"
-                  type="submit"
-                  disabled={upgradePending || !email.trim()}
-                >
-                  {upgradePending ? "Sending…" : "Link email"}
-                </Button>
-              </form>
+              {!pendingEmailUpgrade ? (
+                <form className="grid gap-3" onSubmit={handleEmailUpgrade}>
+                  <input
+                    className="field"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={upgradePending}
+                  />
+                  <Button
+                    variant="secondary"
+                    type="submit"
+                    disabled={upgradePending || !email.trim()}
+                  >
+                    {upgradeAction === "send-email" ? "Sending code…" : "Send code"}
+                  </Button>
+                </form>
+              ) : (
+                <div className="grid gap-3 rounded-[24px] bg-cream p-4">
+                  <p className="text-sm leading-6 text-cocoa">
+                    Enter the 6-digit code sent to{" "}
+                    <span className="font-semibold text-ink">{pendingEmailUpgrade}</span> to save
+                    this diary as an account.
+                  </p>
+                  <form className="grid gap-3" onSubmit={handleVerifyEmailCode}>
+                    <input
+                      className="field"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="123456"
+                      maxLength={6}
+                      value={emailCode}
+                      onChange={(event) =>
+                        setEmailCode(event.target.value.replace(/\D+/g, "").slice(0, 6))
+                      }
+                      disabled={upgradePending}
+                    />
+                    <Button
+                      variant="secondary"
+                      type="submit"
+                      disabled={upgradePending || emailCode.length !== 6}
+                    >
+                      {upgradeAction === "verify-email" ? "Verifying…" : "Verify code"}
+                    </Button>
+                  </form>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button
+                      variant="ghost"
+                      onClick={handleResendEmailCode}
+                      disabled={upgradePending}
+                    >
+                      {upgradeAction === "resend-email" ? "Sending again…" : "Resend code"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        cancelEmailUpgrade();
+                        setEmailNotice(null);
+                      }}
+                      disabled={upgradePending}
+                    >
+                      Use another email
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
             {emailNotice ? (
               <div className="rounded-[24px] border border-[#D9EAD4] bg-[#F7FFF4] p-4 text-sm leading-6 text-[#40624C]">

@@ -56,6 +56,7 @@ type DiaryContextValue = {
   syncState: DiarySyncState;
   upgradeError: string | null;
   upgradePending: boolean;
+  pendingEmailUpgrade: string | null;
   entries: MealEntry[];
   getEntry: (id: string) => MealEntry | undefined;
   saveEntry: (input: SaveEntryInput, existingId?: string) => Promise<MealEntry>;
@@ -63,6 +64,9 @@ type DiaryContextValue = {
   retryArt: (id: string) => void;
   clearAll: () => void;
   upgradeWithEmail: (email: string) => Promise<void>;
+  verifyEmailUpgradeCode: (code: string) => Promise<void>;
+  resendEmailUpgradeCode: () => Promise<void>;
+  cancelEmailUpgrade: () => void;
   upgradeWithGoogle: () => Promise<void>;
 };
 
@@ -71,6 +75,7 @@ type ArtGenerationError = {
 };
 
 const REMOTE_PERSIST_DELAY_MS = 450;
+const PENDING_EMAIL_UPGRADE_KEY = "yumoo.pending-email-upgrade.v1";
 
 const DiaryContext = createContext<DiaryContextValue | null>(null);
 
@@ -105,6 +110,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   const [accountProviders, setAccountProviders] = useState<string[]>([]);
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(
     getSupabaseBrowserClient() ? "guest" : "local"
+  );
+  const [pendingEmailUpgrade, setPendingEmailUpgrade] = useState<string | null>(
+    null
   );
   const [ready, setReady] = useState(false);
   const [store, setStore] = useState<DiaryStore | null>(null);
@@ -142,6 +150,11 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
 
       requests.current.clear();
     };
+  }, []);
+
+  useEffect(() => {
+    const savedEmail = window.localStorage.getItem(PENDING_EMAIL_UPGRADE_KEY);
+    setPendingEmailUpgrade(savedEmail?.trim().toLowerCase() || null);
   }, []);
 
   useEffect(() => {
@@ -367,6 +380,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     setUpgradePending(false);
 
     if (!user.is_anonymous) {
+      persistPendingEmailUpgrade(null);
       setUpgradeError(null);
     }
   }
@@ -420,16 +434,15 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     setUpgradeError(null);
 
     try {
-      const { error } = await client.auth.updateUser(
-        { email: normalizedEmail },
-        {
-          emailRedirectTo: buildAuthCallbackUrl("email")
-        }
-      );
+      const { error } = await client.auth.updateUser({
+        email: normalizedEmail
+      });
 
       if (error) {
         throw error;
       }
+
+      persistPendingEmailUpgrade(normalizedEmail);
     } catch (error) {
       const message = getAuthErrorMessage(
         error,
@@ -447,6 +460,106 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         setUpgradePending(false);
       }
     }
+  }
+
+  async function verifyEmailUpgradeCode(code: string) {
+    const client = supabase.current;
+    const normalizedEmail = pendingEmailUpgrade?.trim().toLowerCase();
+    const normalizedCode = code.replace(/\s+/g, "");
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    if (!normalizedEmail) {
+      throw new Error("Send a code to your email first.");
+    }
+
+    if (!/^\d{6}$/.test(normalizedCode)) {
+      throw new Error("Enter the 6-digit code from your email.");
+    }
+
+    setUpgradePending(true);
+    setUpgradeError(null);
+
+    try {
+      const { error } = await client.auth.verifyOtp({
+        email: normalizedEmail,
+        token: normalizedCode,
+        type: "email_change"
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      persistPendingEmailUpgrade(null);
+      await refreshAccountProfile();
+    } catch (error) {
+      const message = getAuthErrorMessage(
+        error,
+        "That code could not be verified. Request a fresh one and try again."
+      );
+      console.error("Supabase email OTP verification failed:", error);
+
+      if (mounted.current) {
+        setUpgradeError(message);
+      }
+
+      throw new Error(message);
+    } finally {
+      if (mounted.current) {
+        setUpgradePending(false);
+      }
+    }
+  }
+
+  async function resendEmailUpgradeCode() {
+    const client = supabase.current;
+    const normalizedEmail = pendingEmailUpgrade?.trim().toLowerCase();
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    if (!normalizedEmail) {
+      throw new Error("Enter an email address first.");
+    }
+
+    setUpgradePending(true);
+    setUpgradeError(null);
+
+    try {
+      const { error } = await client.auth.resend({
+        type: "email_change",
+        email: normalizedEmail
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      const message = getAuthErrorMessage(
+        error,
+        "A fresh code could not be sent. Check Supabase auth logs and try again."
+      );
+      console.error("Supabase email OTP resend failed:", error);
+
+      if (mounted.current) {
+        setUpgradeError(message);
+      }
+
+      throw new Error(message);
+    } finally {
+      if (mounted.current) {
+        setUpgradePending(false);
+      }
+    }
+  }
+
+  function cancelEmailUpgrade() {
+    persistPendingEmailUpgrade(null);
+    setUpgradeError(null);
   }
 
   async function persistRemoteStore(nextStore: DiaryStore, snapshot: string) {
@@ -743,6 +856,19 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     return store?.entries.find((entry) => entry.id === id);
   }
 
+  function persistPendingEmailUpgrade(email: string | null) {
+    const normalizedEmail = email?.trim().toLowerCase() || null;
+
+    setPendingEmailUpgrade(normalizedEmail);
+
+    if (normalizedEmail) {
+      window.localStorage.setItem(PENDING_EMAIL_UPGRADE_KEY, normalizedEmail);
+      return;
+    }
+
+    window.localStorage.removeItem(PENDING_EMAIL_UPGRADE_KEY);
+  }
+
   return (
     <DiaryContext.Provider
       value={{
@@ -756,6 +882,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         syncState,
         upgradeError,
         upgradePending,
+        pendingEmailUpgrade,
         entries: store?.entries ?? [],
         getEntry,
         saveEntry,
@@ -763,6 +890,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         retryArt,
         clearAll,
         upgradeWithEmail,
+        verifyEmailUpgradeCode,
+        resendEmailUpgradeCode,
+        cancelEmailUpgrade,
         upgradeWithGoogle
       }}
     >

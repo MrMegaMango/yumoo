@@ -22,7 +22,7 @@ Yumoo is a mobile-first PWA food diary that turns your meals into a beautiful, i
 - `/entry/[id]` entry detail and edit
 - `/recap/[yearMonth]` monthly recap preview/export
 - `/settings` account and storage settings
-- `/auth/callback` completes Google/email upgrade redirects and sends the user back to settings
+- `/auth/callback` completes Google upgrade redirects and sends the user back to settings
 
 ## Run locally
 
@@ -38,11 +38,12 @@ To enable persistent guest diaries with Supabase:
 
 1. Set `NEXT_PUBLIC_SUPABASE_URL` and either `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 2. Enable anonymous sign-ins and manual linking in Supabase Auth.
-3. Add your local and deployed `/auth/callback` URLs to Supabase Auth redirect URLs.
+3. Add your local and deployed `/auth/callback` URLs to Supabase Auth redirect URLs for Google linking.
 4. If you want Google upgrades, enable the Google provider.
 5. Apply `supabase/migrations/20260320_guest_diaries.sql`.
 6. Apply `supabase/migrations/20260320_guest_security_hardening.sql`.
 7. Tune Supabase Auth rate limits in the dashboard for anonymous sign-ins and other auth endpoints.
+8. If you want email-code upgrades, customize Supabase's "Change email address" template to show `{{ .Token }}` and copy that reads like "save your Yumoo diary" instead of the default change-email wording.
 
 To enable low-friction bot protection for new guests:
 
@@ -65,7 +66,7 @@ To tighten app-side art quotas:
 - Original photos should move to private Supabase Storage for production.
 - Art generation sends a compressed copy of the meal photo through the app's server route to OpenAI.
 - Guest persistence depends on the Supabase anonymous session surviving in the browser; clearing site data will lose access to that guest diary.
-- Settings can now upgrade the active anonymous guest into Google or email, but a separate sign-in screen for returning users is still not built.
+- Settings can now upgrade the active anonymous guest into Google or email. Google uses a redirect, while email upgrade uses a 6-digit code from Supabase's change-email template on the same screen.
 - The app-side art limits are in-memory, so they are best-effort on serverless instances until you add a shared rate-limit store.
 - Recap export is currently an SVG download, which is fast and private but not yet a richer image pipeline.
 

@@ -39,8 +39,8 @@ Every page consumes this context. There is no server-side page data fetching for
 
 `/settings` is now a real upgrade surface:
 - guest sessions can call `linkIdentity()` for Google
-- guest sessions can call `updateUser({ email })` to attach an email identity
-- `/auth/callback` waits for the redirected auth state, then returns to settings with a success flag
+- guest sessions can call `updateUser({ email })`, then `verifyOtp({ type: "email_change" })` to attach an email identity with a 6-digit code
+- `/auth/callback` waits for the redirected auth state for Google links (and still tolerates legacy email-link redirects), then returns to settings with a success flag
 
 `/api/art/generate` (`app/api/art/generate/route.ts`) is the only server route currently in active use. It validates the request body and delegates to `lib/openai-art.ts`, which:
 - verifies the attached Supabase session when an access token is present
@@ -81,7 +81,7 @@ MealEntry {
 | `/day/[localDate]` | All meals for a date |
 | `/recap/[yearMonth]` | Monthly SVG poster — downloadable |
 | `/settings` | Storage info, guest upgrade controls, clear data |
-| `/auth/callback` | Handles Google/email auth redirects and sends users back to settings |
+| `/auth/callback` | Handles Google auth redirects and sends users back to settings |
 
 ### Design Constraints
 
@@ -120,3 +120,4 @@ ART_MAX_CAPTION_LENGTH # Optional max caption length for art generation
 - Current schema is intentionally simple: one `guest_diaries` row per authenticated guest user, with the full diary stored as JSONB
 - RLS policies restrict reads and writes to `auth.uid() = user_id`
 - Guest-to-user upgrades do not migrate rows; the same auth user id remains attached after Google/email is linked
+- The Supabase "Change email address" template should use `{{ .Token }}` and copy that reads like "save your Yumoo diary" rather than a raw email-change notice
