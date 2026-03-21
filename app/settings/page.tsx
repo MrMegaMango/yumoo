@@ -216,9 +216,18 @@ export default function SettingsPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (message.toLowerCase().includes("already been registered") || message.toLowerCase().includes("already registered")) {
-        setSignInEmail(email);
         setAccountMode("signin");
-        setSignInNotice("Looks like you already have an account. Sign in below to load your diary.");
+        setUpgradeAction(null);
+        setSignInAction("send-email");
+        try {
+          await signInWithEmail(email);
+          setSignInNotice(`We sent a sign-in code to ${email.trim().toLowerCase()}.`);
+        } catch {
+          // signInError will show in sign-in panel
+        } finally {
+          setSignInAction(null);
+        }
+        return;
       }
       return;
     } finally {
