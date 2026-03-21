@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BottomNav } from "@/components/bottom-nav";
+import { InstallBanner } from "@/components/install-banner";
 import { buttonClasses } from "@/components/ui";
 
 type AppShellProps = {
@@ -29,6 +30,8 @@ export function AppShell({
         </div>
         {headerTrailing}
       </header>
+
+      <InstallBanner />
 
       <main className="flex-1 space-y-5 pb-8">{children}</main>
 
