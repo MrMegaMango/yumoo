@@ -44,3 +44,13 @@ export function buildAuthCallbackUrl(upgrade?: "google" | "email") {
 
   return url.toString();
 }
+
+export function buildSignInCallbackUrl() {
+  if (typeof window === "undefined") {
+    return "/auth/callback";
+  }
+
+  const url = new URL("/auth/callback", window.location.origin);
+  url.searchParams.set("signin", "google");
+  return url.toString();
+}

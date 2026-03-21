@@ -30,6 +30,7 @@ import {
 import { compressImageFile } from "@/lib/image";
 import {
   buildAuthCallbackUrl,
+  buildSignInCallbackUrl,
   getSupabaseBrowserClient
 } from "@/lib/supabase-browser";
 import { useTurnstileToken } from "@/lib/turnstile-browser";
@@ -57,6 +58,9 @@ type DiaryContextValue = {
   upgradeError: string | null;
   upgradePending: boolean;
   pendingEmailUpgrade: string | null;
+  signInError: string | null;
+  signInPending: boolean;
+  pendingEmailSignIn: string | null;
   entries: MealEntry[];
   getEntry: (id: string) => MealEntry | undefined;
   saveEntry: (input: SaveEntryInput, existingId?: string) => Promise<MealEntry>;
@@ -68,6 +72,11 @@ type DiaryContextValue = {
   resendEmailUpgradeCode: () => Promise<void>;
   cancelEmailUpgrade: () => void;
   upgradeWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string) => Promise<void>;
+  verifySignInCode: (code: string) => Promise<void>;
+  resendSignInCode: () => Promise<void>;
+  cancelEmailSignIn: () => void;
 };
 
 type ArtGenerationError = {
@@ -76,6 +85,7 @@ type ArtGenerationError = {
 
 const REMOTE_PERSIST_DELAY_MS = 450;
 const PENDING_EMAIL_UPGRADE_KEY = "yumoo.pending-email-upgrade.v1";
+const PENDING_EMAIL_SIGNIN_KEY = "yumoo.pending-email-signin.v1";
 
 const DiaryContext = createContext<DiaryContextValue | null>(null);
 
@@ -114,6 +124,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   const [pendingEmailUpgrade, setPendingEmailUpgrade] = useState<string | null>(
     null
   );
+  const [pendingEmailSignIn, setPendingEmailSignIn] = useState<string | null>(null);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [signInPending, setSignInPending] = useState(false);
   const [ready, setReady] = useState(false);
   const [store, setStore] = useState<DiaryStore | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -155,6 +168,8 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const savedEmail = window.localStorage.getItem(PENDING_EMAIL_UPGRADE_KEY);
     setPendingEmailUpgrade(savedEmail?.trim().toLowerCase() || null);
+    const savedSignInEmail = window.localStorage.getItem(PENDING_EMAIL_SIGNIN_KEY);
+    setPendingEmailSignIn(savedSignInEmail?.trim().toLowerCase() || null);
   }, []);
 
   useEffect(() => {
@@ -562,6 +577,238 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     setUpgradeError(null);
   }
 
+  async function signInWithGoogle() {
+    const client = supabase.current;
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    setSignInPending(true);
+    setSignInError(null);
+
+    const { error } = await client.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: buildSignInCallbackUrl()
+      }
+    });
+
+    if (error) {
+      const message = getAuthErrorMessage(error, "Google sign-in could not start.");
+      console.error("Supabase Google sign-in failed:", error);
+
+      if (mounted.current) {
+        setSignInPending(false);
+        setSignInError(message);
+      }
+
+      throw new Error(message);
+    }
+  }
+
+  async function signInWithEmail(email: string) {
+    const client = supabase.current;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      throw new Error("Enter a valid email address first.");
+    }
+
+    setSignInPending(true);
+    setSignInError(null);
+
+    try {
+      const { error } = await client.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { shouldCreateUser: false }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      persistPendingEmailSignIn(normalizedEmail);
+    } catch (error) {
+      const message = getAuthErrorMessage(
+        error,
+        "Sign-in code could not be sent. Check that this email is registered."
+      );
+      console.error("Supabase email sign-in failed:", error);
+
+      if (mounted.current) {
+        setSignInError(message);
+      }
+
+      throw new Error(message);
+    } finally {
+      if (mounted.current) {
+        setSignInPending(false);
+      }
+    }
+  }
+
+  async function verifySignInCode(code: string) {
+    const client = supabase.current;
+    const normalizedEmail = pendingEmailSignIn?.trim().toLowerCase();
+    const normalizedCode = code.replace(/\s+/g, "");
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    if (!normalizedEmail) {
+      throw new Error("Send a sign-in code to your email first.");
+    }
+
+    if (!/^\d{6}$/.test(normalizedCode)) {
+      throw new Error("Enter the 6-digit code from your email.");
+    }
+
+    setSignInPending(true);
+    setSignInError(null);
+
+    try {
+      const { error } = await client.auth.verifyOtp({
+        email: normalizedEmail,
+        token: normalizedCode,
+        type: "email"
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      persistPendingEmailSignIn(null);
+
+      const { data: userData } = await client.auth.getUser();
+      const userId = userData.user?.id;
+
+      if (userId) {
+        await reloadDiaryForUser(userId);
+      }
+
+      await refreshAccountProfile();
+    } catch (error) {
+      const message = getAuthErrorMessage(
+        error,
+        "That code could not be verified. Request a fresh one and try again."
+      );
+      console.error("Supabase sign-in OTP verification failed:", error);
+
+      if (mounted.current) {
+        setSignInError(message);
+      }
+
+      throw new Error(message);
+    } finally {
+      if (mounted.current) {
+        setSignInPending(false);
+      }
+    }
+  }
+
+  async function resendSignInCode() {
+    const client = supabase.current;
+    const normalizedEmail = pendingEmailSignIn?.trim().toLowerCase();
+
+    if (!client) {
+      throw new Error("Supabase guest sync is not configured.");
+    }
+
+    if (!normalizedEmail) {
+      throw new Error("Enter an email address first.");
+    }
+
+    setSignInPending(true);
+    setSignInError(null);
+
+    try {
+      const { error } = await client.auth.resend({
+        type: "signup",
+        email: normalizedEmail
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      const message = getAuthErrorMessage(
+        error,
+        "A fresh code could not be sent. Try again shortly."
+      );
+      console.error("Supabase sign-in OTP resend failed:", error);
+
+      if (mounted.current) {
+        setSignInError(message);
+      }
+
+      throw new Error(message);
+    } finally {
+      if (mounted.current) {
+        setSignInPending(false);
+      }
+    }
+  }
+
+  function cancelEmailSignIn() {
+    persistPendingEmailSignIn(null);
+    setSignInError(null);
+  }
+
+  async function reloadDiaryForUser(userId: string) {
+    const client = supabase.current;
+
+    if (!client) {
+      return;
+    }
+
+    try {
+      const localStore = store ?? createEmptyStore();
+      const remoteStore = await fetchGuestDiaryStore(client, userId);
+      const merged = mergeStores(localStore, remoteStore, userId);
+
+      syncMeta.current.guestId = userId;
+      syncMeta.current.lastPersistedSnapshot = remoteStore
+        ? serializeStore(normalizeStoreForGuest(remoteStore, userId))
+        : "";
+      syncMeta.current.readyForRemoteWrite = true;
+
+      if (!mounted.current) {
+        return;
+      }
+
+      setStore(merged);
+      setSyncError(null);
+      setSyncState(remoteStore ? "synced" : "syncing");
+    } catch (error) {
+      if (!mounted.current) {
+        return;
+      }
+
+      setSyncState("error");
+      setSyncError(
+        error instanceof Error ? error.message : "Could not load your diary."
+      );
+    }
+  }
+
+  function persistPendingEmailSignIn(email: string | null) {
+    const normalizedEmail = email?.trim().toLowerCase() || null;
+    setPendingEmailSignIn(normalizedEmail);
+
+    if (normalizedEmail) {
+      window.localStorage.setItem(PENDING_EMAIL_SIGNIN_KEY, normalizedEmail);
+      return;
+    }
+
+    window.localStorage.removeItem(PENDING_EMAIL_SIGNIN_KEY);
+  }
+
   async function persistRemoteStore(nextStore: DiaryStore, snapshot: string) {
     const client = supabase.current;
     const guestId = syncMeta.current.guestId;
@@ -883,6 +1130,9 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         upgradeError,
         upgradePending,
         pendingEmailUpgrade,
+        signInError,
+        signInPending,
+        pendingEmailSignIn,
         entries: store?.entries ?? [],
         getEntry,
         saveEntry,
@@ -893,7 +1143,12 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         verifyEmailUpgradeCode,
         resendEmailUpgradeCode,
         cancelEmailUpgrade,
-        upgradeWithGoogle
+        upgradeWithGoogle,
+        signInWithGoogle,
+        signInWithEmail,
+        verifySignInCode,
+        resendSignInCode,
+        cancelEmailSignIn
       }}
     >
       {children}

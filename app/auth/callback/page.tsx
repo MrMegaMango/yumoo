@@ -9,6 +9,7 @@ import { Card, Tag, buttonClasses } from "@/components/ui";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type CallbackStatus = "working" | "success" | "error";
+type CallbackMode = "upgrade" | "signin";
 
 const CALLBACK_TIMEOUT_MS = 5000;
 const CALLBACK_POLL_MS = 250;
@@ -36,12 +37,9 @@ function getAuthErrorFromLocation() {
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [status, setStatus] = useState<CallbackStatus>("working");
-  const [message, setMessage] = useState(
-    "Finishing the account upgrade for this diary."
-  );
-  const [upgradeMethod, setUpgradeMethod] = useState<"email" | "google" | null>(
-    null
-  );
+  const [message, setMessage] = useState("Finishing up.");
+  const [callbackMode, setCallbackMode] = useState<CallbackMode>("upgrade");
+  const [upgradeMethod, setUpgradeMethod] = useState<"email" | "google" | null>(null);
 
   useEffect(() => {
     const client = getSupabaseBrowserClient();
@@ -50,11 +48,21 @@ export default function AuthCallbackPage() {
 
     async function finishAuthRedirect() {
       const params = new URLSearchParams(window.location.search);
-      const method = params.get("upgrade");
+      const upgradeParam = params.get("upgrade");
+      const signinParam = params.get("signin");
+      const mode: CallbackMode = signinParam ? "signin" : "upgrade";
       const parsedMethod =
-        method === "email" || method === "google" ? method : null;
+        upgradeParam === "email" || upgradeParam === "google" ? upgradeParam
+        : signinParam === "google" ? "google"
+        : null;
 
+      setCallbackMode(mode);
       setUpgradeMethod(parsedMethod);
+      setMessage(
+        mode === "signin"
+          ? "Signing you in to your existing account."
+          : "Finishing the account upgrade for this diary."
+      );
 
       if (!client) {
         setStatus("error");
@@ -89,26 +97,33 @@ export default function AuthCallbackPage() {
               return;
             }
 
-            setStatus("success");
-            setMessage(
-              parsedMethod === "email"
-                ? "Email confirmed. This diary is now attached to your saved account."
-                : parsedMethod === "google"
-                  ? "Google is now linked. Sending you back to settings."
-                  : "This diary is now attached to your saved account."
-            );
+            if (mode === "signin") {
+              setStatus("success");
+              setMessage("Welcome back. Sending you to settings.");
 
-            const params = new URLSearchParams({
-              upgrade: "success"
-            });
+              redirectTimerId = window.setTimeout(() => {
+                router.replace("/settings?signin=success&method=google");
+              }, 900);
+            } else {
+              setStatus("success");
+              setMessage(
+                parsedMethod === "email"
+                  ? "Email confirmed. This diary is now attached to your saved account."
+                  : parsedMethod === "google"
+                    ? "Google is now linked. Sending you back to settings."
+                    : "This diary is now attached to your saved account."
+              );
 
-            if (parsedMethod === "email" || parsedMethod === "google") {
-              params.set("method", parsedMethod);
+              const redirectParams = new URLSearchParams({ upgrade: "success" });
+
+              if (parsedMethod === "email" || parsedMethod === "google") {
+                redirectParams.set("method", parsedMethod);
+              }
+
+              redirectTimerId = window.setTimeout(() => {
+                router.replace(`/settings?${redirectParams.toString()}`);
+              }, 900);
             }
-
-            redirectTimerId = window.setTimeout(() => {
-              router.replace(`/settings?${params.toString()}`);
-            }, 900);
 
             return;
           }
@@ -119,7 +134,9 @@ export default function AuthCallbackPage() {
         }
 
         throw new Error(
-          "The redirect finished, but this browser is still on an anonymous session. Head back to settings and try again."
+          mode === "signin"
+            ? "The redirect finished but sign-in could not be confirmed. Head back to settings and try again."
+            : "The redirect finished, but this browser is still on an anonymous session. Head back to settings and try again."
         );
       } catch (error) {
         if (cancelled) {
@@ -130,7 +147,9 @@ export default function AuthCallbackPage() {
         setMessage(
           error instanceof Error
             ? error.message
-            : "The account upgrade could not be completed."
+            : mode === "signin"
+              ? "Sign-in could not be completed."
+              : "The account upgrade could not be completed."
         );
       }
     }
@@ -147,21 +166,25 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   const subtitle =
-    upgradeMethod === "email"
-      ? "Confirming your email and attaching it to this same diary."
-      : upgradeMethod === "google"
-        ? "Finishing the Google link for this same diary."
-        : "Finishing your account upgrade.";
+    callbackMode === "signin"
+      ? "Loading your saved diary."
+      : upgradeMethod === "email"
+        ? "Confirming your email and attaching it to this same diary."
+        : upgradeMethod === "google"
+          ? "Finishing the Google link for this same diary."
+          : "Finishing your account upgrade.";
 
   return (
     <AppShell
-      title="Almost there"
+      title={callbackMode === "signin" ? "Signing in" : "Almost there"}
       subtitle={subtitle}
       showFab={false}
     >
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-ink">Upgrade status</h2>
+          <h2 className="text-xl font-semibold text-ink">
+            {callbackMode === "signin" ? "Sign-in status" : "Upgrade status"}
+          </h2>
           <Tag active={status !== "error"}>
             {status === "working"
               ? "Working"
