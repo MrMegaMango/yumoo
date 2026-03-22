@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import { NextResponse } from "next/server";
 
 import { getSupabaseServerClient } from "@/lib/supabase-server";
@@ -84,6 +85,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
+    if (error instanceof Stripe.errors.StripeError) {
+      console.error("Stripe error creating checkout session:", error.message);
+      return NextResponse.json(
+        { error: "Checkout is unavailable right now. Please try again later." },
+        { status: 503 }
+      );
+    }
     const message = error instanceof Error ? error.message : "Checkout session could not be created.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

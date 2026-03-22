@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import { NextResponse } from "next/server";
 
 import { getStripeClient, getTipPriceId, isStripeConfigured } from "@/lib/stripe";
@@ -34,6 +35,13 @@ export async function POST() {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
+    if (error instanceof Stripe.errors.StripeError) {
+      console.error("Stripe error creating tip session:", error.message);
+      return NextResponse.json(
+        { error: "Checkout is unavailable right now. Please try again later." },
+        { status: 503 }
+      );
+    }
     const message = error instanceof Error ? error.message : "Checkout session could not be created.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
