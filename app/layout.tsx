@@ -6,6 +6,7 @@ import "@/app/globals.css";
 
 import { Analytics } from "@vercel/analytics/next";
 import { DiaryProvider } from "@/components/diary-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { PWAProvider } from "@/components/pwa-provider";
 
 const fontSans = Plus_Jakarta_Sans({
@@ -60,10 +61,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable} ${fontHeadline.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <DiaryProvider>
-          <PWAProvider />
-          {children}
-        </DiaryProvider>
+        <ErrorBoundary>
+          <DiaryProvider>
+            <PWAProvider />
+            {children}
+          </DiaryProvider>
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>
