@@ -50,7 +50,7 @@ export async function generateArtImage(
       size: SIZE,
       outputFormat: OUTPUT_FORMAT,
       outputCompression: OUTPUT_COMPRESSION,
-      renderStyle: "storybook-sticker-edit"
+      renderStyle: "abstract-expressionism"
     }
   };
 }
