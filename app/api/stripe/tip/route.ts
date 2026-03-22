@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { getStripeClient, getTipPriceId, isStripeConfigured } from "@/lib/stripe";
+import {
+  getStripeClient,
+  isStripeConfigured,
+  resolveTipPriceId
+} from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -12,11 +16,11 @@ export async function POST() {
     );
   }
 
-  const priceId = getTipPriceId();
+  const priceId = await resolveTipPriceId();
 
   if (!priceId) {
     return NextResponse.json(
-      { error: "STRIPE_PRICE_TIP is not configured." },
+      { error: "No active Stripe tip price was found." },
       { status: 503 }
     );
   }

@@ -51,6 +51,14 @@ To enable low-friction bot protection for new guests:
 2. Set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in the app so the browser can request a token.
 3. Leave the secret out of Vercel and the repo; Supabase verifies the token during anonymous sign-in.
 
+To enable credit top-ups and tips with Stripe:
+
+1. Set `STRIPE_SECRET_KEY` for the environment you are deploying.
+2. Set `STRIPE_WEBHOOK_SECRET` after creating a Stripe webhook that points to `/api/stripe/webhook`.
+3. Set `NEXT_PUBLIC_APP_URL` so Checkout can return to the correct `/settings` URL after success or cancel.
+4. Either set `STRIPE_PRICE_10_CREDITS`, `STRIPE_PRICE_50_CREDITS`, and `STRIPE_PRICE_TIP`, or keep active Stripe products named `10 Yumoo Credits`, `50 Yumoo Credits`, and `tipping jar`.
+5. If the `STRIPE_PRICE_*` IDs are missing or stale, the app falls back to the current active default price for those product names in the account behind `STRIPE_SECRET_KEY`.
+
 To tighten app-side art quotas:
 
 - `ART_MAX_REQUESTS_PER_IP_PER_HOUR` limits bursts from one connection.

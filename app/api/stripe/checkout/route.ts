@@ -5,8 +5,8 @@ import {
   CREDIT_PACKAGES,
   type CreditPackage,
   getStripeClient,
-  getPriceId,
-  isStripeConfigured
+  isStripeConfigured,
+  resolveCreditPriceId
 } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -57,11 +57,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const priceId = getPriceId(pkg);
+  const priceId = await resolveCreditPriceId(pkg);
 
   if (!priceId) {
     return NextResponse.json(
-      { error: `STRIPE_PRICE_${pkg}_CREDITS is not configured.` },
+      { error: `No active Stripe price was found for the ${pkg}-credit package.` },
       { status: 503 }
     );
   }
