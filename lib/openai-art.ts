@@ -62,11 +62,11 @@ export function isOpenAIArtConfigured() {
 function buildMealArtPrompt(input: ArtJobInput) {
   const promptParts = [
     "Transform the provided meal photo into a whimsical illustrated food portrait.",
-    "Keep the same dish, plating, recognizable ingredients, and overall composition from the source image.",
-    "Render it as cozy storybook sticker art with soft brush texture, clean shapes, warm pastel color harmony, and polished but clearly illustrated detail.",
-    "Make the food look appetizing and cute, not photorealistic.",
-    "Use a simple tidy background that supports the food without distracting from it.",
-    "Return one finished square image."
+    // "Keep any recognizable ingredients, and overall composition from the source image.",
+    // "Render it as cozy storybook sticker art with soft brush texture, clean shapes, warm pastel color harmony, and polished but clearly illustrated detail.",
+    // "Make the food look appetizing and cute, not photorealistic.",
+    // "Use a simple tidy background that supports the food without distracting from it.",
+    // "Return one finished square image."
   ];
 
   if (input.mood) {
