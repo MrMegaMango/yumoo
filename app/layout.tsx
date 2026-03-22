@@ -61,12 +61,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontSans.variable} ${fontDisplay.variable} ${fontHeadline.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <ErrorBoundary>
-          <DiaryProvider>
-            <PWAProvider />
+        <DiaryProvider>
+          <PWAProvider />
+          <ErrorBoundary>
             {children}
-          </DiaryProvider>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </DiaryProvider>
         <Analytics />
       </body>
     </html>

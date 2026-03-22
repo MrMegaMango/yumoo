@@ -31,13 +31,21 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
           <p className="text-lg font-semibold text-ink">Something went wrong.</p>
-          <p className="text-sm text-cocoa">Try refreshing the page.</p>
-          <button
-            className="rounded-full bg-ink px-6 py-2 text-sm font-semibold text-cream"
-            onClick={() => window.location.reload()}
-          >
-            Refresh
-          </button>
+          <p className="text-sm text-cocoa">Try refreshing the page or go back to your diary.</p>
+          <div className="flex gap-3">
+            <a
+              href="/calendar"
+              className="rounded-full bg-white/90 px-6 py-2 text-sm font-semibold text-ink ring-1 ring-[#EAD6C7]"
+            >
+              My Pages
+            </a>
+            <button
+              className="rounded-full bg-ink px-6 py-2 text-sm font-semibold text-cream"
+              onClick={() => window.location.reload()}
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       );
     }
