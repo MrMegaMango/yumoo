@@ -32,3 +32,7 @@ export function getPriceId(pkg: CreditPackage): string | null {
   const envKey = CREDIT_PACKAGES[pkg].priceEnvKey;
   return process.env[envKey] ?? null;
 }
+
+export function getTipPriceId(): string | null {
+  return process.env.STRIPE_PRICE_TIP ?? null;
+}

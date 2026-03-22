@@ -40,6 +40,8 @@ export default function SettingsPage() {
   const [signInSuccess, setSignInSuccess] = useState(false);
   const [topupPending, setTopupPending] = useState<"10" | "50" | null>(null);
   const [topupSuccess, setTopupSuccess] = useState<number | null>(null);
+  const [tipPending, setTipPending] = useState(false);
+  const [tipSuccess, setTipSuccess] = useState(false);
   const [referralLink, setReferralLink] = useState<string | null>(null);
   const [referralCopied, setReferralCopied] = useState(false);
   const [referralPending, setReferralPending] = useState(false);
@@ -90,6 +92,10 @@ export default function SettingsPage() {
     if (params.get("topup") === "success") {
       const credits = parseInt(params.get("credits") ?? "", 10);
       setTopupSuccess(Number.isFinite(credits) && credits > 0 ? credits : 0);
+    }
+
+    if (params.get("tip") === "success") {
+      setTipSuccess(true);
     }
   }, []);
 
@@ -212,6 +218,25 @@ export default function SettingsPage() {
       alert(err instanceof Error ? err.message : "Could not start checkout.");
     } finally {
       setTopupPending(null);
+    }
+  }
+
+  async function handleTip() {
+    setTipPending(true);
+
+    try {
+      const response = await fetch("/api/stripe/tip", { method: "POST" });
+      const body = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !body.url) {
+        throw new Error(body.error ?? "Could not start checkout.");
+      }
+
+      window.location.href = body.url;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not start checkout.");
+    } finally {
+      setTipPending(false);
     }
   }
 
@@ -390,6 +415,18 @@ export default function SettingsPage() {
             <Tag active>Signed in</Tag>
           </div>
           <p className="text-sm leading-6 text-cocoa">Your saved diary is loading.</p>
+        </Card>
+      ) : null}
+
+      {tipSuccess ? (
+        <Card className="space-y-2 border-[#D9EAD4] bg-[#F7FFF4]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-ink">Thank you</h2>
+            <Tag active>Received</Tag>
+          </div>
+          <p className="text-sm leading-6 text-cocoa">
+            Your support means a lot. Enjoy Yumoo!
+          </p>
         </Card>
       ) : null}
 
@@ -683,6 +720,16 @@ export default function SettingsPage() {
                 </Button>
               </div>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-ink">Tip jar</p>
+            <p className="text-sm leading-6 text-cocoa">
+              If Yumoo brings you joy, a tip goes a long way.
+            </p>
+            <Button variant="secondary" onClick={handleTip} disabled={tipPending}>
+              {tipPending ? "Opening…" : "Send a tip"}
+            </Button>
           </div>
 
           <div className="space-y-2">
