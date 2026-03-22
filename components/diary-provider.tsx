@@ -87,6 +87,7 @@ type ArtGenerationError = {
 const REMOTE_PERSIST_DELAY_MS = 450;
 const PENDING_EMAIL_UPGRADE_KEY = "yumoo.pending-email-upgrade.v1";
 const PENDING_EMAIL_SIGNIN_KEY = "yumoo.pending-email-signin.v1";
+const REFERRAL_CODE_KEY = "yumoo.referral-code.v1";
 
 const DiaryContext = createContext<DiaryContextValue | null>(null);
 
@@ -142,6 +143,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   const turnstile = useTurnstileToken();
   const mounted = useRef(true);
   const initialSyncStarted = useRef(false);
+  const previousIsAnonymous = useRef<boolean | null>(null);
   const syncMeta = useRef({
     guestId: null as string | null,
     lastPersistedSnapshot: "",
@@ -172,6 +174,12 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     setPendingEmailUpgrade(savedEmail?.trim().toLowerCase() || null);
     const savedSignInEmail = window.localStorage.getItem(PENDING_EMAIL_SIGNIN_KEY);
     setPendingEmailSignIn(savedSignInEmail?.trim().toLowerCase() || null);
+
+    // Capture referral code from URL and store for later redemption on upgrade
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref?.trim()) {
+      window.localStorage.setItem(REFERRAL_CODE_KEY, ref.trim());
+    }
   }, []);
 
   useEffect(() => {
@@ -401,6 +409,51 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     if (!user.is_anonymous) {
       persistPendingEmailUpgrade(null);
       setUpgradeError(null);
+
+      // Detect anonymous → real account transition and redeem any pending referral
+      if (previousIsAnonymous.current === true) {
+        void redeemReferralIfPresent(user.id);
+      }
+    }
+
+    previousIsAnonymous.current = user.is_anonymous ?? true;
+  }
+
+  async function redeemReferralIfPresent(userId: string) {
+    const code = window.localStorage.getItem(REFERRAL_CODE_KEY);
+
+    if (!code) {
+      return;
+    }
+
+    // Remove immediately so we don't retry on subsequent profile refreshes
+    window.localStorage.removeItem(REFERRAL_CODE_KEY);
+
+    const client = supabase.current;
+
+    if (!client) {
+      return;
+    }
+
+    const {
+      data: { session }
+    } = await client.auth.getSession();
+
+    if (!session?.access_token) {
+      return;
+    }
+
+    try {
+      await fetch("/api/referral/redeem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ code, userId })
+      });
+    } catch {
+      // Non-critical — referral reward is best-effort
     }
   }
 

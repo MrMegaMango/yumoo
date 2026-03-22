@@ -4,8 +4,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 let serverClient: SupabaseClient | null = null;
+let adminClient: SupabaseClient | null = null;
 
 export function isSupabaseServerConfigured() {
   return Boolean(supabaseUrl && supabaseKey);
@@ -28,9 +30,49 @@ export function getSupabaseServerClient() {
   return serverClient;
 }
 
+// Returns a privileged client using the service role key (bypasses RLS).
+// Only use server-side for trusted operations like webhook credit grants.
+export function getSupabaseAdminClient() {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return null;
+  }
+
+  if (!adminClient) {
+    adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+  }
+
+  return adminClient;
+}
+
+// Adds credits to a user via the service role. Used by the Stripe webhook.
+export async function addUserCredits(
+  userId: string,
+  amount: number
+): Promise<void> {
+  const client = getSupabaseAdminClient();
+
+  if (!client) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
+  }
+
+  const { error } = await client.rpc("add_user_credits", {
+    target_user_id: userId,
+    amount
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 // Returns a one-off client that runs DB calls with the user's JWT in context.
 // This makes auth.uid() available inside SECURITY DEFINER functions and for RLS.
-function getSupabaseServerClientForUser(accessToken: string) {
+export function getSupabaseServerClientForUser(accessToken: string) {
   if (!supabaseUrl || !supabaseKey) {
     return null;
   }

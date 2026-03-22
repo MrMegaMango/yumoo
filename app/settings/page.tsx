@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AppShell } from "@/components/app-shell";
 import { useDiary } from "@/components/diary-provider";
 import { Button, Card, Tag } from "@/components/ui";
-import { isSupabaseConfigured } from "@/lib/supabase-browser";
+import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase-browser";
 
 function formatProvider(provider: string) {
   if (provider === "google") {
@@ -38,6 +38,11 @@ export default function SettingsPage() {
     "google" | "send-email" | "verify-code" | "resend" | null
   >(null);
   const [signInSuccess, setSignInSuccess] = useState(false);
+  const [topupPending, setTopupPending] = useState<"10" | "50" | null>(null);
+  const [topupSuccess, setTopupSuccess] = useState<number | null>(null);
+  const [referralLink, setReferralLink] = useState<string | null>(null);
+  const [referralCopied, setReferralCopied] = useState(false);
+  const [referralPending, setReferralPending] = useState(false);
   const {
     accountEmail,
     accountProviders,
@@ -80,6 +85,11 @@ export default function SettingsPage() {
 
     if (params.get("signin") === "success") {
       setSignInSuccess(true);
+    }
+
+    if (params.get("topup") === "success") {
+      const credits = parseInt(params.get("credits") ?? "", 10);
+      setTopupSuccess(Number.isFinite(credits) && credits > 0 ? credits : 0);
     }
   }, []);
 
@@ -170,6 +180,80 @@ export default function SettingsPage() {
       return;
     } finally {
       setSignInAction(null);
+    }
+  }
+
+  async function handleTopUp(pkg: "10" | "50") {
+    setTopupPending(pkg);
+
+    try {
+      const client = getSupabaseBrowserClient();
+      const accessToken = client
+        ? (await client.auth.getSession()).data.session?.access_token
+        : null;
+
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        },
+        body: JSON.stringify({ package: pkg })
+      });
+
+      const body = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !body.url) {
+        throw new Error(body.error ?? "Could not start checkout.");
+      }
+
+      window.location.href = body.url;
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not start checkout.");
+    } finally {
+      setTopupPending(null);
+    }
+  }
+
+  async function handleCopyReferralLink() {
+    setReferralPending(true);
+
+    try {
+      let link = referralLink;
+
+      if (!link) {
+        const client = getSupabaseBrowserClient();
+        const accessToken = client
+          ? (await client.auth.getSession()).data.session?.access_token
+          : null;
+
+        const response = await fetch("/api/referral/code", {
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : {}
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not fetch referral code.");
+        }
+
+        const body = (await response.json()) as { code?: string };
+
+        if (!body.code) {
+          throw new Error("No referral code returned.");
+        }
+
+        link = `${window.location.origin}/?ref=${body.code}`;
+        setReferralLink(link);
+      }
+
+      await navigator.clipboard.writeText(link);
+      setReferralCopied(true);
+      window.setTimeout(() => setReferralCopied(false), 2000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not copy link.");
+    } finally {
+      setReferralPending(false);
     }
   }
 
@@ -306,6 +390,20 @@ export default function SettingsPage() {
             <Tag active>Signed in</Tag>
           </div>
           <p className="text-sm leading-6 text-cocoa">Your saved diary is loading.</p>
+        </Card>
+      ) : null}
+
+      {topupSuccess !== null ? (
+        <Card className="space-y-2 border-[#D9EAD4] bg-[#F7FFF4]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-ink">Credits added</h2>
+            <Tag active>Done</Tag>
+          </div>
+          <p className="text-sm leading-6 text-cocoa">
+            {topupSuccess > 0
+              ? `${topupSuccess} credits have been added to your account.`
+              : "Your credits have been topped up."}
+          </p>
         </Card>
       ) : null}
 
@@ -556,6 +654,52 @@ export default function SettingsPage() {
           </>
         )}
       </Card>
+
+      {supabaseConfigured ? (
+        <Card className="space-y-4">
+          <h2 className="text-xl font-semibold text-ink">Get more credits</h2>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-ink">Top up</p>
+            {accountStatus !== "user" ? (
+              <p className="text-sm leading-6 text-cocoa">
+                Save your account first to top up — anonymous sessions can expire and credits would be lost.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => handleTopUp("10")}
+                  disabled={topupPending !== null}
+                  variant="secondary"
+                >
+                  {topupPending === "10" ? "Opening…" : "10 credits — $1"}
+                </Button>
+                <Button
+                  onClick={() => handleTopUp("50")}
+                  disabled={topupPending !== null}
+                  variant="secondary"
+                >
+                  {topupPending === "50" ? "Opening…" : "50 credits — $4"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-ink">Refer a friend</p>
+            <p className="text-sm leading-6 text-cocoa">
+              Share your link. When someone signs up using it, you get 10 credits.
+            </p>
+            <Button
+              variant="secondary"
+              onClick={handleCopyReferralLink}
+              disabled={referralPending}
+            >
+              {referralPending ? "Fetching link…" : referralCopied ? "Copied!" : "Copy referral link"}
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="space-y-4">
         <h2 className="text-xl font-semibold text-ink">Privacy</h2>
