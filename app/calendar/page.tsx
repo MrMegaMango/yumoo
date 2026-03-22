@@ -583,10 +583,12 @@ function WeekSpread({ week }: { week: WeekGroup }) {
       );
     }
 
-    // Deckled paper empty slot
+    // Deckled paper empty slot — tapping navigates to add a meal for this day
+    const localDate = toLocalDateString(d);
     return (
+      <Link href={`/entry/new?date=${localDate}`} className="group block">
       <div
-        className="relative"
+        className="relative transition-transform duration-200 group-hover:scale-[1.04] group-hover:z-10"
         style={{
           rotate: `${layout.rotate}deg`,
           translate: `${layout.xOff}px ${layout.yOff}px`,
@@ -652,6 +654,7 @@ function WeekSpread({ week }: { week: WeekGroup }) {
           </div>
         </div>
       </div>
+      </Link>
     );
   }
 
