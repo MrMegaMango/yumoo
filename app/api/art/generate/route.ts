@@ -6,7 +6,10 @@ import {
   enforceArtRequestLimits
 } from "@/lib/art-abuse";
 import { generateArtImage, isOpenAIArtConfigured } from "@/lib/openai-art";
-import { getSupabaseServerClient } from "@/lib/supabase-server";
+import {
+  consumeArtCredit,
+  getSupabaseServerClient
+} from "@/lib/supabase-server";
 import type { ArtJobInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -70,6 +73,7 @@ export async function POST(request: Request) {
   try {
     assertSafeArtPayload(payload);
 
+    const accessToken = getBearerToken(request);
     const verifiedUserId = await getVerifiedSupabaseUserId(request);
 
     if (verifiedUserId && verifiedUserId !== payload.userId) {
@@ -79,10 +83,36 @@ export async function POST(request: Request) {
       );
     }
 
-    enforceArtRequestLimits(request, verifiedUserId ?? payload.userId, payload);
+    // For authenticated users, consume a credit (DB-backed, atomic).
+    // This replaces the in-memory per-user daily limit for authenticated requests.
+    let creditsRemaining: number | undefined;
+
+    if (accessToken && verifiedUserId) {
+      const remaining = await consumeArtCredit(accessToken, verifiedUserId);
+
+      if (remaining === null) {
+        // Supabase not configured — fall through to in-memory limiting below
+      } else if (remaining < 0) {
+        throw new ArtAbuseLimitError(
+          "You've used all your art credits.",
+          { status: 402 }
+        );
+      } else {
+        creditsRemaining = remaining;
+      }
+    }
+
+    // IP and per-entry rate limits always apply.
+    // Skip the in-memory user daily limit for authenticated users — credits handle it.
+    enforceArtRequestLimits(request, verifiedUserId ?? payload.userId, payload, {
+      skipUserLimit: Boolean(verifiedUserId)
+    });
 
     const result = await generateArtImage(payload);
-    return NextResponse.json(result);
+
+    return NextResponse.json(
+      creditsRemaining !== undefined ? { ...result, creditsRemaining } : result
+    );
   } catch (error) {
     if (error instanceof ArtAbuseLimitError) {
       return NextResponse.json(

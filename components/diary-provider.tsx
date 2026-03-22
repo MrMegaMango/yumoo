@@ -52,6 +52,7 @@ type DiaryContextValue = {
   accountProviders: string[];
   accountStatus: AccountStatus;
   cloudEnabled: boolean;
+  creditsRemaining: number | null;
   guestId: string | null;
   syncError: string | null;
   syncState: DiarySyncState;
@@ -127,6 +128,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   const [pendingEmailSignIn, setPendingEmailSignIn] = useState<string | null>(null);
   const [signInError, setSignInError] = useState<string | null>(null);
   const [signInPending, setSignInPending] = useState(false);
+  const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [store, setStore] = useState<DiaryStore | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -252,6 +254,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         setSyncError(null);
         setSyncState(remoteSnapshot === mergedSnapshot ? "synced" : "syncing");
         await refreshAccountProfile();
+        await refreshCredits(guestId);
       } catch (error) {
         const message =
           error instanceof Error
@@ -274,6 +277,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         setSyncState("error");
         setSyncError(message);
         await refreshAccountProfile();
+        if (guestId) await refreshCredits(guestId);
       }
     })();
   }, [turnstile.configured, turnstile.error, turnstile.ready]);
@@ -398,6 +402,27 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       persistPendingEmailUpgrade(null);
       setUpgradeError(null);
     }
+  }
+
+  async function refreshCredits(userId: string) {
+    const client = supabase.current;
+
+    if (!client) {
+      return;
+    }
+
+    const { data } = await client
+      .from("user_credits")
+      .select("credits_remaining")
+      .eq("user_id", userId)
+      .maybeSingle<{ credits_remaining: number }>();
+
+    if (!mounted.current) {
+      return;
+    }
+
+    // If no row exists yet the user hasn't generated art; they start with 10.
+    setCreditsRemaining(data?.credits_remaining ?? 10);
   }
 
   async function upgradeWithGoogle() {
@@ -789,6 +814,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       setStore(merged);
       setSyncError(null);
       setSyncState(remoteStore ? "synced" : "syncing");
+      await refreshCredits(userId);
     } catch (error) {
       if (!mounted.current) {
         return;
@@ -902,6 +928,10 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
 
       const result = (await response.json()) as ArtJobResult;
       const timestamp = new Date().toISOString();
+
+      if (result.creditsRemaining !== undefined) {
+        setCreditsRemaining(result.creditsRemaining);
+      }
 
       setStore((current) => {
         if (!current) {
@@ -1128,6 +1158,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         accountProviders,
         accountStatus,
         cloudEnabled: Boolean(syncMeta.current.readyForRemoteWrite),
+        creditsRemaining,
         guestId: store?.guestId ?? null,
         syncError,
         syncState,

@@ -8,7 +8,7 @@ import {
 } from "@/lib/diary";
 import type { DiaryStore } from "@/lib/types";
 
-const GUEST_DIARY_TABLE = "guest_diaries";
+const GUEST_DIARY_TABLE = "diaries";
 
 type GuestDiaryRow = {
   store: unknown;

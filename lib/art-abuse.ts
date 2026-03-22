@@ -164,7 +164,12 @@ export function assertSafeArtPayload(payload: ArtJobInput) {
   }
 }
 
-export function enforceArtRequestLimits(request: Request, userId: string, payload: ArtJobInput) {
+export function enforceArtRequestLimits(
+  request: Request,
+  userId: string,
+  payload: ArtJobInput,
+  options?: { skipUserLimit?: boolean }
+) {
   const config = getConfig();
   const state = getRateLimiterState();
   const ipKey = `ip:${getClientIp(request)}`;
@@ -182,21 +187,23 @@ export function enforceArtRequestLimits(request: Request, userId: string, payloa
     );
   }
 
-  const userResult = consumeLimit(
-    state.user,
-    userKey,
-    config.maxUserPerDay,
-    DAY_IN_MS
-  );
-
-  if (!userResult.allowed) {
-    throw new ArtAbuseLimitError(
-      "This diary has hit its art limit for today. Try again tomorrow.",
-      {
-        retryAfterSeconds: userResult.retryAfterSeconds,
-        status: 429
-      }
+  if (!options?.skipUserLimit) {
+    const userResult = consumeLimit(
+      state.user,
+      userKey,
+      config.maxUserPerDay,
+      DAY_IN_MS
     );
+
+    if (!userResult.allowed) {
+      throw new ArtAbuseLimitError(
+        "This diary has hit its art limit for today. Try again tomorrow.",
+        {
+          retryAfterSeconds: userResult.retryAfterSeconds,
+          status: 429
+        }
+      );
+    }
   }
 
   const entryResult = consumeLimit(

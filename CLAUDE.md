@@ -32,7 +32,7 @@ Every page consumes this context. There is no server-side page data fetching for
 
 `lib/guest-diary-db.ts` handles:
 - anonymous guest auth
-- fetch/upsert for the `guest_diaries` table
+- fetch/upsert for the `diaries` table
 - normalization of the remote store to the authenticated guest id
 
 `lib/turnstile-browser.ts` loads Cloudflare Turnstile explicitly in the browser and exposes a hidden, execute-on-demand token flow for anonymous sign-in.
@@ -44,7 +44,8 @@ Every page consumes this context. There is no server-side page data fetching for
 
 `/api/art/generate` (`app/api/art/generate/route.ts`) is the only server route currently in active use. It validates the request body and delegates to `lib/openai-art.ts`, which:
 - verifies the attached Supabase session when an access token is present
-- enforces payload limits plus per-IP / per-user / per-entry art quotas from `lib/art-abuse.ts`
+- for authenticated users: atomically deducts one credit via `consume_art_credit()` DB function (returns 402 at 0)
+- for unauthenticated requests: enforces per-IP and per-entry in-memory quotas from `lib/art-abuse.ts`
 - Uses the official `openai` SDK
 - Converts the stored meal `photoDataUrl` into a `File`
 - Calls `images.edit` with `gpt-image-1-mini`
@@ -115,9 +116,10 @@ ART_MAX_CAPTION_LENGTH # Optional max caption length for art generation
 
 ## Database
 
-- The guest persistence table lives in `supabase/migrations/20260320_guest_diaries.sql`
+- Diary storage: `diaries` table (renamed from `guest_diaries` in `20260321_credits.sql`) — one JSONB row per auth user, shared by anonymous visitors and signed-in users alike
+- Credit ledger: `user_credits` table — one row per auth user, `credits_remaining` integer (default 10), created lazily on first art generation
 - Security hardening for stale anonymous-user cleanup lives in `supabase/migrations/20260320_guest_security_hardening.sql`
-- Current schema is intentionally simple: one `guest_diaries` row per authenticated guest user, with the full diary stored as JSONB
 - RLS policies restrict reads and writes to `auth.uid() = user_id`
-- Guest-to-user upgrades do not migrate rows; the same auth user id remains attached after Google/email is linked
+- `consume_art_credit(uuid)` is a `SECURITY DEFINER` function called via RPC from the art route; it verifies `auth.uid()` and atomically deducts one credit
+- Guest-to-user upgrades do not migrate rows; the same auth user id remains attached after Google/email is linked, so credits carry over
 - The Supabase "Change email address" template should use `{{ .Token }}` and copy that reads like "save your Yumoo diary" rather than a raw email-change notice
