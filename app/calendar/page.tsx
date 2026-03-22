@@ -178,7 +178,7 @@ function ScrapbookCard({ entry }: { entry: MealEntry }) {
         {/* Photo */}
         <div className="relative overflow-hidden rounded-[10px]">
           <img
-            src={entry.photoDataUrl}
+            src={entry.art.imageDataUrl ?? entry.photoDataUrl}
             alt={entry.mood ? `${entry.mood} meal` : "Meal"}
             className="block aspect-[4/5] w-full object-cover"
           />
@@ -317,7 +317,7 @@ function MonthAlbum({
                   {entries.slice(0, count <= 4 ? 4 : 9).map((entry) => (
                     <div key={entry.id} className="overflow-hidden rounded-[4px]">
                       <img
-                        src={entry.photoDataUrl}
+                        src={entry.art.imageDataUrl ?? entry.photoDataUrl}
                         alt=""
                         className="h-full w-full object-cover"
                       />
@@ -551,7 +551,7 @@ function WeekSpread({ week }: { week: WeekGroup }) {
 
             <div className="relative overflow-hidden rounded-[10px]">
               <img
-                src={entry.photoDataUrl}
+                src={entry.art.imageDataUrl ?? entry.photoDataUrl}
                 alt={entry.mood ? `${entry.mood} meal` : "Meal"}
                 className="block aspect-[4/5] w-full object-cover"
               />
