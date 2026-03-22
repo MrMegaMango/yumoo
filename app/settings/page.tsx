@@ -309,23 +309,6 @@ export default function SettingsPage() {
         </Card>
       ) : null}
 
-      <Card className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-ink">This device</h2>
-          <Tag active={!cloudEnabled}>Private</Tag>
-        </div>
-        <p className="text-sm leading-6 text-cocoa">
-          {cloudEnabled
-            ? "This browser keeps a local copy for speed, even while your diary syncs to Supabase."
-            : "Your meals are currently saved only on this device."}
-        </p>
-        <p className="text-sm leading-6 text-cocoa">
-          {cloudEnabled
-            ? "If this device goes offline, your last synced diary is still waiting in the database."
-            : "If you want to keep your diary across sessions more reliably, turn on guest cloud backup with Supabase."}
-        </p>
-      </Card>
-
       {syncError ? (
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
