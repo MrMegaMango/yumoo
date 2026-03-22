@@ -3,6 +3,11 @@ import {
   getYearMonthKey,
   toLocalDateString
 } from "@/lib/date";
+import {
+  ART_PROMPT_VERSION,
+  ART_STYLE_VERSION,
+  pickPalette
+} from "@/lib/art";
 import type { DiaryStore, MealEntry } from "@/lib/types";
 
 export const STORAGE_KEY = "yumoo.v1";
@@ -41,11 +46,37 @@ export function parseStoreValue(rawValue: unknown): DiaryStore | null {
     return {
       version: 1,
       guestId: parsed.guestId,
-      entries: sortEntries(parsed.entries)
+      entries: sortEntries(parsed.entries.map(normalizeEntry))
     };
   } catch {
     return null;
   }
+}
+
+function normalizeEntry(raw: MealEntry): MealEntry {
+  // At runtime, legacy entries stored in localStorage may be missing required art
+  // fields even though the TypeScript type marks them as required. Guard defensively.
+  const art = raw.art as Partial<MealEntry["art"]> | undefined;
+  if (art?.jobId && art.status && art.palette && art.updatedAt) {
+    return raw;
+  }
+  const now = new Date().toISOString();
+  return {
+    ...raw,
+    art: {
+      jobId: art?.jobId ?? crypto.randomUUID(),
+      status: art?.status ?? "failed",
+      promptVersion: art?.promptVersion ?? ART_PROMPT_VERSION,
+      styleVersion: art?.styleVersion ?? ART_STYLE_VERSION,
+      palette: art?.palette ?? pickPalette(raw.id ?? ""),
+      updatedAt: art?.updatedAt ?? raw.updatedAt ?? now,
+      imageDataUrl: art?.imageDataUrl,
+      provider: art?.provider,
+      model: art?.model,
+      metadata: art?.metadata,
+      error: art?.error
+    }
+  };
 }
 
 export function normalizeStoreForGuest(store: DiaryStore, guestId: string): DiaryStore {

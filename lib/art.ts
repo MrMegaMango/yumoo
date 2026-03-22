@@ -65,12 +65,15 @@ export function createFailedArt(
   };
 }
 
-export function paletteBackground(palette: [string, string, string]) {
+const FALLBACK_PALETTE: [string, string, string] = paletteBank[0];
+
+export function paletteBackground(palette: [string, string, string] | null | undefined) {
+  const p = palette ?? FALLBACK_PALETTE;
   return {
     backgroundImage: [
-      `radial-gradient(circle at 18% 20%, ${palette[0]} 0%, transparent 40%)`,
-      `radial-gradient(circle at 82% 18%, ${palette[1]} 0%, transparent 36%)`,
-      `linear-gradient(160deg, ${palette[2]} 0%, ${palette[0]} 100%)`
+      `radial-gradient(circle at 18% 20%, ${p[0]} 0%, transparent 40%)`,
+      `radial-gradient(circle at 82% 18%, ${p[1]} 0%, transparent 36%)`,
+      `linear-gradient(160deg, ${p[2]} 0%, ${p[0]} 100%)`
     ].join(", ")
   };
 }
