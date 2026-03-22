@@ -44,6 +44,7 @@ export default function SettingsPage() {
     accountStatus,
     clearAll,
     cloudEnabled,
+    creditsRemaining,
     entries,
     guestId,
     pendingEmailUpgrade,
@@ -359,6 +360,32 @@ export default function SettingsPage() {
           </div>
         ) : null}
       </Card>
+
+      {supabaseConfigured ? (
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-ink">Art credits</h2>
+            <Tag active={creditsRemaining !== null && creditsRemaining > 0}>
+              {creditsRemaining === null ? "Loading" : creditsRemaining === 0 ? "Empty" : "Active"}
+            </Tag>
+          </div>
+          <p className="text-sm leading-6 text-cocoa">
+            Each meal photo you generate art for uses one credit. Everyone starts with 10.
+          </p>
+          <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
+            {creditsRemaining === null ? (
+              "Checking balance…"
+            ) : creditsRemaining === 0 ? (
+              "No credits remaining."
+            ) : (
+              <>
+                <span className="font-semibold text-ink">{creditsRemaining}</span>{" "}
+                {creditsRemaining === 1 ? "credit" : "credits"} remaining
+              </>
+            )}
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
