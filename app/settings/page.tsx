@@ -326,40 +326,17 @@ export default function SettingsPage() {
         </p>
       </Card>
 
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-ink">Cloud sync</h2>
-          <Tag active={syncState === "synced"}>
-            {syncState === "synced"
-              ? "Synced"
-              : syncState === "syncing"
-                ? "Syncing"
-                : syncState === "connecting"
-                  ? "Connecting"
-                  : syncState === "error"
-                    ? "Issue"
-                    : "Local only"}
-          </Tag>
-        </div>
-        <p className="text-sm leading-6 text-cocoa">
-          {supabaseConfigured
-            ? accountStatus === "user"
-              ? "This browser is signed in and syncing the same diary row that started as an anonymous guest."
-              : "Yumoo signs this browser in anonymously and keeps one diary row in Postgres for the current guest."
-            : "Add the Supabase URL, public key, and guest diary table to enable persistent guest storage."}
-        </p>
-        {ready && guestId && supabaseConfigured ? (
-          <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
-            {accountStatus === "user" ? "Account ID" : "Guest ID"}:{" "}
-            <span className="font-semibold text-ink">{guestId.slice(0, 8)}…</span>
+      {syncError ? (
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-ink">Cloud sync</h2>
+            <Tag>Issue</Tag>
           </div>
-        ) : null}
-        {syncError ? (
           <div className="rounded-[24px] border border-[#E8BCB7] bg-[#FFF3F1] p-4 text-sm leading-6 text-[#8F403E]">
             {syncError}
           </div>
-        ) : null}
-      </Card>
+        </Card>
+      ) : null}
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
