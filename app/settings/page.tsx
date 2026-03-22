@@ -361,32 +361,6 @@ export default function SettingsPage() {
         ) : null}
       </Card>
 
-      {supabaseConfigured ? (
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-ink">Art credits</h2>
-            <Tag active={creditsRemaining !== null && creditsRemaining > 0}>
-              {creditsRemaining === null ? "Loading" : creditsRemaining === 0 ? "Empty" : "Active"}
-            </Tag>
-          </div>
-          <p className="text-sm leading-6 text-cocoa">
-            Each meal photo you generate art for uses one credit. Everyone starts with 10.
-          </p>
-          <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
-            {creditsRemaining === null ? (
-              "Checking balance…"
-            ) : creditsRemaining === 0 ? (
-              "No credits remaining."
-            ) : (
-              <>
-                <span className="font-semibold text-ink">{creditsRemaining}</span>{" "}
-                {creditsRemaining === 1 ? "credit" : "credits"} remaining
-              </>
-            )}
-          </div>
-        </Card>
-      ) : null}
-
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-ink">Account</h2>
@@ -403,22 +377,23 @@ export default function SettingsPage() {
               keeps your synced meals.
             </p>
             <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
-              <div>
-                Email: <span className="font-semibold text-ink">{accountEmail ?? "Not exposed by provider"}</span>
+              <div>Email: <span className="font-semibold text-ink">{accountEmail ?? "Not exposed by provider"}</span></div>
+              <div className="mt-2">
+                Art credits:{" "}
+                <span className="font-semibold text-ink">
+                  {creditsRemaining === null ? "…" : creditsRemaining}
+                </span>
               </div>
-              {accountProviders.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {accountProviders.map((provider) => (
-                    <Tag key={provider} active>
-                      {formatProvider(provider)}
-                    </Tag>
-                  ))}
-                </div>
-              ) : null}
             </div>
           </>
         ) : (
           <>
+            <div className="rounded-[24px] bg-cream p-4 text-sm leading-6 text-cocoa">
+              Art credits:{" "}
+              <span className="font-semibold text-ink">
+                {creditsRemaining === null ? "…" : creditsRemaining}
+              </span>
+            </div>
             <div className="flex gap-2">
               <button
                 className={`text-sm font-semibold ${accountMode === "upgrade" ? "text-ink" : "text-cocoa"}`}
