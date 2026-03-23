@@ -1,11 +1,26 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    fetch("/api/log-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack,
+        location: typeof window !== "undefined" ? window.location.pathname : "",
+      }),
+    }).catch(() => {});
+  }, [error]);
+
   return (
     <html lang="en">
       <body
@@ -29,9 +44,14 @@ export default function GlobalError({
           <p style={{ fontSize: "1.125rem", fontWeight: 600, color: "#2B221E", margin: "0 0 0.5rem" }}>
             Something went wrong.
           </p>
-          <p style={{ fontSize: "0.875rem", color: "#6B584E", margin: "0 0 1.5rem", lineHeight: 1.6 }}>
+          <p style={{ fontSize: "0.875rem", color: "#6B584E", margin: "0 0 0.5rem", lineHeight: 1.6 }}>
             Yumoo hit an unexpected snag. Try refreshing — your diary is safe in local storage.
           </p>
+          {error.message ? (
+            <p style={{ fontSize: "0.75rem", color: "#9B8880", margin: "0 0 1.5rem", fontFamily: "monospace", wordBreak: "break-word" }}>
+              {error.message}
+            </p>
+          ) : null}
           <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
             <a
               href="/calendar"
