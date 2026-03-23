@@ -3,10 +3,12 @@ import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import {
   CREDIT_PACKAGES,
+  LIFETIME_PACKAGE,
   type CreditPackage,
   getStripeClient,
   isStripeConfigured,
-  resolveCreditPriceId
+  resolveCreditPriceId,
+  resolveLifetimePriceId
 } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -45,16 +47,48 @@ export async function POST(request: Request) {
     );
   }
 
-  let pkg: CreditPackage;
+  let pkg: CreditPackage | "lifetime";
 
   try {
     const body = (await request.json()) as { package?: string };
-    if (body?.package !== "10" && body?.package !== "50") {
+    if (body?.package !== "10" && body?.package !== "50" && body?.package !== "lifetime") {
       return NextResponse.json({ error: "Invalid credit package." }, { status: 400 });
     }
     pkg = body.package;
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  const stripe = getStripeClient()!;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  if (pkg === "lifetime") {
+    const priceId = await resolveLifetimePriceId();
+
+    if (!priceId) {
+      return NextResponse.json(
+        { error: "No active Stripe price was found for lifetime access." },
+        { status: 503 }
+      );
+    }
+
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{ price: priceId, quantity: 1 }],
+        metadata: {
+          userId: data.user.id,
+          lifetime: "true"
+        },
+        success_url: `${appUrl}/settings?topup=success&lifetime=true`,
+        cancel_url: `${appUrl}/settings`
+      });
+
+      return NextResponse.json({ url: session.url });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Checkout session could not be created.";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
   }
 
   const priceId = await resolveCreditPriceId(pkg);
@@ -66,8 +100,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const stripe = getStripeClient()!;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const { credits } = CREDIT_PACKAGES[pkg];
 
   try {

@@ -38,8 +38,9 @@ export default function SettingsPage() {
     "google" | "send-email" | "verify-code" | "resend" | null
   >(null);
   const [signInSuccess, setSignInSuccess] = useState(false);
-  const [topupPending, setTopupPending] = useState<"10" | "50" | null>(null);
+  const [topupPending, setTopupPending] = useState<"10" | "50" | "lifetime" | null>(null);
   const [topupSuccess, setTopupSuccess] = useState<number | null>(null);
+  const [lifetimeSuccess, setLifetimeSuccess] = useState(false);
   const [tipPending, setTipPending] = useState(false);
   const [tipSuccess, setTipSuccess] = useState(false);
   const [referralLink, setReferralLink] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export default function SettingsPage() {
     clearAll,
     cloudEnabled,
     creditsRemaining,
+    lifetimeAccess,
     entries,
     guestId,
     pendingEmailUpgrade,
@@ -90,8 +92,12 @@ export default function SettingsPage() {
     }
 
     if (params.get("topup") === "success") {
-      const credits = parseInt(params.get("credits") ?? "", 10);
-      setTopupSuccess(Number.isFinite(credits) && credits > 0 ? credits : 0);
+      if (params.get("lifetime") === "true") {
+        setLifetimeSuccess(true);
+      } else {
+        const credits = parseInt(params.get("credits") ?? "", 10);
+        setTopupSuccess(Number.isFinite(credits) && credits > 0 ? credits : 0);
+      }
     }
 
     if (params.get("tip") === "success") {
@@ -189,7 +195,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleTopUp(pkg: "10" | "50") {
+  async function handleTopUp(pkg: "10" | "50" | "lifetime") {
     setTopupPending(pkg);
 
     try {
@@ -430,6 +436,18 @@ export default function SettingsPage() {
         </Card>
       ) : null}
 
+      {lifetimeSuccess ? (
+        <Card className="space-y-2 border-[#D9EAD4] bg-[#F7FFF4]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-ink">Lifetime access unlocked</h2>
+            <Tag active>Done</Tag>
+          </div>
+          <p className="text-sm leading-6 text-cocoa">
+            You now have unlimited art generations — forever.
+          </p>
+        </Card>
+      ) : null}
+
       {topupSuccess !== null ? (
         <Card className="space-y-2 border-[#D9EAD4] bg-[#F7FFF4]">
           <div className="flex items-center justify-between">
@@ -476,7 +494,7 @@ export default function SettingsPage() {
               <div className="mt-2">
                 Art credits:{" "}
                 <span className="font-semibold text-ink">
-                  {creditsRemaining === null ? "…" : creditsRemaining}
+                  {lifetimeAccess ? "Unlimited" : creditsRemaining === null ? "…" : creditsRemaining}
                 </span>
               </div>
             </div>
@@ -697,10 +715,40 @@ export default function SettingsPage() {
           <h2 className="text-xl font-semibold text-ink">Get more credits</h2>
 
           <div className="space-y-2">
+            <p className="text-sm font-medium text-ink">Lifetime access</p>
+            {accountStatus !== "user" ? (
+              <p className="text-sm leading-6 text-cocoa">
+                Save your account first to purchase — anonymous sessions can expire and lifetime access would be lost.
+              </p>
+            ) : lifetimeAccess ? (
+              <p className="text-sm leading-6 text-cocoa">
+                You already have unlimited art generations.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm leading-6 text-cocoa">
+                  Unlimited art generations, forever — one-time purchase.
+                </p>
+                <Button
+                  onClick={() => handleTopUp("lifetime")}
+                  disabled={topupPending !== null}
+                  variant="secondary"
+                >
+                  {topupPending === "lifetime" ? "Opening…" : "Lifetime access — $19.99"}
+                </Button>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <p className="text-sm font-medium text-ink">Top up</p>
             {accountStatus !== "user" ? (
               <p className="text-sm leading-6 text-cocoa">
                 Save your account first to top up — anonymous sessions can expire and credits would be lost.
+              </p>
+            ) : lifetimeAccess ? (
+              <p className="text-sm leading-6 text-cocoa">
+                No top-up needed — your lifetime access covers all art generations.
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-3">

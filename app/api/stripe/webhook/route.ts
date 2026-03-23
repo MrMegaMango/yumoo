@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { addUserCredits } from "@/lib/supabase-server";
+import { addUserCredits, grantLifetimeAccess } from "@/lib/supabase-server";
 import { getStripeClient } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -32,16 +32,25 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.metadata?.userId;
-    const credits = parseInt(session.metadata?.credits ?? "", 10);
 
-    if (!userId || !Number.isFinite(credits) || credits <= 0) {
+    if (!userId) {
       return NextResponse.json({ error: "Invalid session metadata." }, { status: 400 });
     }
 
     try {
-      await addUserCredits(userId, credits);
+      if (session.metadata?.lifetime === "true") {
+        await grantLifetimeAccess(userId);
+      } else {
+        const credits = parseInt(session.metadata?.credits ?? "", 10);
+
+        if (!Number.isFinite(credits) || credits <= 0) {
+          return NextResponse.json({ error: "Invalid session metadata." }, { status: 400 });
+        }
+
+        await addUserCredits(userId, credits);
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add credits.";
+      const message = error instanceof Error ? error.message : "Failed to process purchase.";
       return NextResponse.json({ error: message }, { status: 500 });
     }
   }

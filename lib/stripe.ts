@@ -53,6 +53,14 @@ export const CREDIT_PACKAGES: Record<
   }
 };
 
+export const LIFETIME_PACKAGE = {
+  label: "$19.99",
+  priceEnvKey: "STRIPE_PRICE_LIFETIME",
+  productName: "Yumoo Lifetime Access",
+  unitAmount: 1999,
+  currency: "usd" as const
+};
+
 const TIP_PRICE = {
   envKey: "STRIPE_PRICE_TIP",
   productNames: ["tipping jar", "tip jar"]
@@ -230,6 +238,14 @@ export async function resolveCreditPriceId(
     productNames: [config.productName],
     currency: config.currency,
     unitAmount: config.unitAmount
+  });
+}
+
+export async function resolveLifetimePriceId(): Promise<string | null> {
+  return resolvePriceId(LIFETIME_PACKAGE.priceEnvKey, {
+    productNames: [LIFETIME_PACKAGE.productName],
+    currency: LIFETIME_PACKAGE.currency,
+    unitAmount: LIFETIME_PACKAGE.unitAmount
   });
 }
 

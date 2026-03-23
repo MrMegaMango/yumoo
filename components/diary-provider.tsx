@@ -53,6 +53,7 @@ type DiaryContextValue = {
   accountStatus: AccountStatus;
   cloudEnabled: boolean;
   creditsRemaining: number | null;
+  lifetimeAccess: boolean;
   guestId: string | null;
   syncError: string | null;
   syncState: DiarySyncState;
@@ -130,6 +131,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
   const [signInError, setSignInError] = useState<string | null>(null);
   const [signInPending, setSignInPending] = useState(false);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const [lifetimeAccess, setLifetimeAccess] = useState(false);
   const [ready, setReady] = useState(false);
   const [store, setStore] = useState<DiaryStore | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -1006,6 +1008,10 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         setCreditsRemaining(result.creditsRemaining);
       }
 
+      if (result.lifetimeAccess) {
+        setLifetimeAccess(true);
+      }
+
       setStore((current) => {
         if (!current) {
           return current;
@@ -1232,6 +1238,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         accountStatus,
         cloudEnabled: Boolean(syncMeta.current.readyForRemoteWrite),
         creditsRemaining,
+        lifetimeAccess,
         guestId: store?.guestId ?? null,
         syncError,
         syncState,

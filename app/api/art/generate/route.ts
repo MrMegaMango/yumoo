@@ -86,12 +86,16 @@ export async function POST(request: Request) {
     // For authenticated users, consume a credit (DB-backed, atomic).
     // This replaces the in-memory per-user daily limit for authenticated requests.
     let creditsRemaining: number | undefined;
+    let lifetimeAccess: boolean | undefined;
 
     if (accessToken && verifiedUserId) {
       const remaining = await consumeArtCredit(accessToken, verifiedUserId);
 
       if (remaining === null) {
         // Supabase not configured — fall through to in-memory limiting below
+      } else if (remaining === -2) {
+        // Lifetime user — no deduction, no limit
+        lifetimeAccess = true;
       } else if (remaining < 0) {
         throw new ArtAbuseLimitError(
           "You've used all your art credits.",
@@ -110,9 +114,11 @@ export async function POST(request: Request) {
 
     const result = await generateArtImage(payload);
 
-    return NextResponse.json(
-      creditsRemaining !== undefined ? { ...result, creditsRemaining } : result
-    );
+    return NextResponse.json({
+      ...result,
+      ...(creditsRemaining !== undefined && { creditsRemaining }),
+      ...(lifetimeAccess && { lifetimeAccess })
+    });
   } catch (error) {
     if (error instanceof ArtAbuseLimitError) {
       return NextResponse.json(

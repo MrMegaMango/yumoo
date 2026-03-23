@@ -90,6 +90,23 @@ export function getSupabaseServerClientForUser(accessToken: string) {
   });
 }
 
+// Grants lifetime access to a user via the service role. Used by the Stripe webhook.
+export async function grantLifetimeAccess(userId: string): Promise<void> {
+  const client = getSupabaseAdminClient();
+
+  if (!client) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
+  }
+
+  const { error } = await client.rpc("grant_lifetime_access", {
+    target_user_id: userId
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 // Atomically deducts one art credit for userId.
 // Returns the credits_remaining after deduction (>= 0), or -1 if the balance
 // was already 0. Returns null when Supabase is not configured.

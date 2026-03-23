@@ -36,6 +36,7 @@ export type ArtJobResult = {
   model: string;
   metadata?: Record<string, unknown>;
   creditsRemaining?: number;
+  lifetimeAccess?: boolean;
 };
 
 export type EntryArt = {
