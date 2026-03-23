@@ -79,7 +79,7 @@ export function buildRecapSvg(input: {
       <rect x="72" y="1566" width="936" height="236" rx="42" fill="#FFFDFB" />
       <text x="120" y="1648" font-size="28" font-family="Arial, sans-serif" fill="#6B584E">Most common vibe</text>
       <text x="120" y="1718" font-size="54" font-weight="700" font-family="Georgia, serif" fill="#2B221E">${escapeXml(input.metrics.topMealType ?? "mixed plate")}</text>
-      <text x="120" y="1776" font-size="26" font-family="Arial, sans-serif" fill="#6B584E">Private by default. Cute on purpose.</text>
+      <text x="120" y="1776" font-size="26" font-family="Arial, sans-serif" fill="#6B584E">Your meals, beautifully remembered.</text>
     </svg>
   `.trim();
 }

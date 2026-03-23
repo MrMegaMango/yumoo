@@ -42,7 +42,7 @@ Every page consumes this context. There is no server-side page data fetching for
 - guest sessions can call `updateUser({ email })`, then `verifyOtp({ type: "email_change" })` to attach an email identity with a 6-digit code
 - `/auth/callback` waits for the redirected auth state for Google links (and still tolerates legacy email-link redirects), then returns to settings with a success flag
 
-`/api/art/generate` (`app/api/art/generate/route.ts`) is the only server route currently in active use. It validates the request body and delegates to `lib/openai-art.ts`, which:
+`/api/art/generate` (`app/api/art/generate/route.ts`) validates the request body and delegates to `lib/openai-art.ts`, which:
 - verifies the attached Supabase session when an access token is present
 - for authenticated users: atomically deducts one credit via `consume_art_credit()` DB function (returns 402 at 0)
 - for unauthenticated requests: enforces per-IP and per-entry in-memory quotas from `lib/art-abuse.ts`

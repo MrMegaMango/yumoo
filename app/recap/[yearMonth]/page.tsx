@@ -58,14 +58,7 @@ export default function RecapPage({
         currentStreak={currentStreak}
       />
 
-      <Card className="space-y-3">
-        <h2 className="text-xl font-semibold text-ink">Recap notes</h2>
-        <p className="text-sm leading-6 text-cocoa">
-          The current export is an SVG poster built locally from your saved entries. It is quick,
-          private, and good enough for an MVP share artifact while a richer export pipeline is still
-          pending.
-        </p>
-      </Card>
+
     </AppShell>
   );
 }

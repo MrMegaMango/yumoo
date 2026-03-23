@@ -382,7 +382,7 @@ export default function SettingsPage() {
       ? "Saved"
       : supabaseConfigured
         ? "Guest"
-        : "Soon";
+        : "Local";
   const successMessage =
     upgradeSuccess === "email"
       ? "Your email is now linked to this diary."
@@ -463,7 +463,7 @@ export default function SettingsPage() {
         </div>
         {!supabaseConfigured ? (
           <p className="text-sm leading-6 text-cocoa">
-            Add Supabase auth first, then this guest diary can be upgraded into a saved account.
+            Your diary is saved locally on this device.
           </p>
         ) : accountStatus === "user" ? (
           <>
