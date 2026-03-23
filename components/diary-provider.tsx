@@ -117,6 +117,70 @@ function getAuthErrorMessage(error: unknown, fallback: string) {
     : fallback;
 }
 
+/**
+ * Persist the diary store to localStorage. If the write fails due to quota,
+ * retries with progressively stripped versions (drop art images, then photos
+ * from older entries). Never throws — a failed write is better than a crash.
+ */
+function safeWriteStore(store: DiaryStore): void {
+  const attempts: Array<() => string> = [
+    // 1. Full fidelity
+    () => JSON.stringify(store),
+    // 2. Strip art images from all but the 5 newest entries
+    () =>
+      JSON.stringify({
+        ...store,
+        entries: store.entries.map((e, i) =>
+          i < 5 ? e : { ...e, art: { ...e.art, imageDataUrl: undefined } }
+        ),
+      }),
+    // 3. Strip all art images
+    () =>
+      JSON.stringify({
+        ...store,
+        entries: store.entries.map((e) => ({
+          ...e,
+          art: { ...e.art, imageDataUrl: undefined },
+        })),
+      }),
+    // 4. Strip photos and art images from all but the 5 newest entries
+    () =>
+      JSON.stringify({
+        ...store,
+        entries: store.entries.map((e, i) =>
+          i < 5
+            ? e
+            : {
+                ...e,
+                photoDataUrl: undefined as unknown as string,
+                art: { ...e.art, imageDataUrl: undefined },
+              }
+        ),
+      }),
+  ];
+
+  for (const serialize of attempts) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, serialize());
+      return;
+    } catch (err) {
+      if (
+        !(err instanceof DOMException) ||
+        (err.name !== "QuotaExceededError" && err.code !== 22)
+      ) {
+        // Unexpected error — rethrow
+        throw err;
+      }
+      // Quota exceeded — try next stripped version
+    }
+  }
+
+  // All attempts exhausted. Log and continue without persisting locally.
+  console.warn(
+    "[yumoo] localStorage quota exceeded — diary not persisted locally this cycle."
+  );
+}
+
 export function DiaryProvider({ children }: { children: ReactNode }) {
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [accountProviders, setAccountProviders] = useState<string[]>([]);
@@ -295,7 +359,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    safeWriteStore(store);
 
     const client = supabase.current;
     const guestId = syncMeta.current.guestId;
