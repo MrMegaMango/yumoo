@@ -50,7 +50,7 @@ export async function generateArtImage(
       size: SIZE,
       outputFormat: OUTPUT_FORMAT,
       outputCompression: OUTPUT_COMPRESSION,
-      renderStyle: "japanese-watercolor"
+      renderStyle: "abstract-expressionism"
     }
   };
 }
@@ -61,12 +61,12 @@ export function isOpenAIArtConfigured() {
 
 function buildMealArtPrompt(input: ArtJobInput) {
   const promptParts = [
-    "Transform the provided meal photo into a Japanese minimal sumi-e watercolor painting.",
-    "Keep the recognizable ingredients and overall composition from the source image.",
-    "Use soft natural lighting, a muted pastel palette with low color saturation, and gentle ink-wash brushstrokes.",
-    "Leave generous negative space in the style of wabi-sabi aesthetics.",
-    "The result should feel calm, elegant, and understated — not photorealistic.",
-    "Return one finished square image."
+    "Transform the provided meal photo into a whimsical illustrated food portrait.",
+    // "Keep any recognizable ingredients, and overall composition from the source image.",
+    // "Render it as cozy storybook sticker art with soft brush texture, clean shapes, warm pastel color harmony, and polished but clearly illustrated detail.",
+    // "Make the food look appetizing and cute, not photorealistic.",
+    // "Use a simple tidy background that supports the food without distracting from it.",
+    // "Return one finished square image."
   ];
 
   if (input.mood) {
