@@ -3,10 +3,10 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 type Props = { children: ReactNode };
-type State = { crashed: boolean };
+type State = { crashed: boolean; message?: string };
 
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { crashed: false };
+  state: State = { crashed: false, message: undefined };
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     fetch("/api/log-error", {
@@ -22,8 +22,8 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("[error-boundary]", error, info.componentStack);
   }
 
-  static getDerivedStateFromError(): State {
-    return { crashed: true };
+  static getDerivedStateFromError(error: Error): State {
+    return { crashed: true, message: error.message };
   }
 
   render() {
@@ -31,7 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
           <p className="text-lg font-semibold text-ink">Something went wrong.</p>
-          <p className="text-sm text-cocoa">Try refreshing the page or go back to your diary.</p>
+          <p className="text-sm text-cocoa">Yumoo hit an unexpected snag. Try refreshing — your diary is safe in local storage.</p>
+          {this.state.message && (
+            <p className="text-xs text-cocoa/60">{this.state.message}</p>
+          )}
           <div className="flex gap-3">
             <a
               href="/calendar"

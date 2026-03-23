@@ -85,8 +85,23 @@ MealEntry {
 | `/entry/[id]` | View/edit/delete entry |
 | `/day/[localDate]` | All meals for a date |
 | `/recap/[yearMonth]` | Monthly SVG poster — downloadable |
-| `/settings` | Storage info, guest upgrade controls, clear data |
+| `/settings` | Storage info, guest upgrade controls, credit top-up, referral link, clear data |
 | `/auth/callback` | Handles Google auth redirects and sends users back to settings |
+
+### API Routes
+
+| Route | Purpose |
+|-------|---------|
+| `/api/art/generate` | Validates request body, deducts credit, calls OpenAI to generate food art |
+| `/api/stripe/checkout` | Creates a Stripe Checkout session for credit package purchases (10 or 50 credits) |
+| `/api/stripe/tip` | Creates a Stripe Checkout session for a customer-chosen tip jar amount |
+| `/api/stripe/webhook` | Handles Stripe webhook events; calls `add_user_credits()` on successful payment |
+| `/api/referral/code` | Gets or creates the caller's referral code via `get_or_create_referral_code()` |
+| `/api/referral/redeem` | Redeems a referral code for a newly-upgraded user via `redeem_referral_code()` |
+| `/api/feedback` | Accepts in-app feedback submissions |
+| `/api/log-error` | Client-side error logger |
+
+`lib/stripe.ts` exports `getStripeClient()`, `isStripeConfigured()`, `resolveCreditPriceId()`, and `resolveTipPriceId()`. Price resolution prefers configured env var IDs but falls back to scanning the Stripe product catalog by name and amount.
 
 ### Design Constraints
 
@@ -116,14 +131,23 @@ ART_MAX_REQUESTS_PER_USER_PER_DAY # Optional app-side daily art cap per diary
 ART_MAX_REQUESTS_PER_ENTRY_PER_HOUR # Optional app-side retry cap per entry
 ART_MAX_PHOTO_BYTES # Optional max accepted photo size after base64 encoding
 ART_MAX_CAPTION_LENGTH # Optional max caption length for art generation
+STRIPE_SECRET_KEY            # Required for credit purchases and tip jar
+STRIPE_WEBHOOK_SECRET        # Required for Stripe webhook signature verification
+STRIPE_PRICE_10_CREDITS      # Optional; Stripe price ID for the 10-credit package ($1.00)
+STRIPE_PRICE_50_CREDITS      # Optional; Stripe price ID for the 50-credit package ($4.00)
+STRIPE_PRICE_TIP             # Optional; Stripe price ID for the tip jar product
 ```
 
 ## Database
 
 - Diary storage: `diaries` table (renamed from `guest_diaries` in `20260321_credits.sql`) — one JSONB row per auth user, shared by anonymous visitors and signed-in users alike
 - Credit ledger: `user_credits` table — one row per auth user, `credits_remaining` integer (default 10), created lazily on first art generation
+- Referral codes: `referral_codes` table — one row per user, created lazily; `referral_redemptions` table — one row per new user preventing double-rewards
 - Security hardening for stale anonymous-user cleanup lives in `supabase/migrations/20260320_guest_security_hardening.sql`
 - RLS policies restrict reads and writes to `auth.uid() = user_id`
-- `consume_art_credit(uuid)` is a `SECURITY DEFINER` function called via RPC from the art route; it verifies `auth.uid()` and atomically deducts one credit
+- `consume_art_credit(uuid)` — `SECURITY DEFINER`; called from art route; verifies `auth.uid()` and atomically deducts one credit
+- `get_or_create_referral_code(uuid)` — `SECURITY DEFINER`; returns caller's referral code, creating one on first call
+- `redeem_referral_code(text, uuid)` — `SECURITY DEFINER`; awards 10 credits to referrer on new-user upgrade; no-ops on self-referral or double-redeem
+- `add_user_credits(uuid, integer)` — `SECURITY DEFINER`, service role only; called by the Stripe webhook to add credits after payment
 - Guest-to-user upgrades do not migrate rows; the same auth user id remains attached after Google/email is linked, so credits carry over
 - The Supabase "Change email address" template should use `{{ .Token }}` and copy that reads like "save your Yumoo diary" rather than a raw email-change notice

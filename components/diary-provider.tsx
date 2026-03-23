@@ -295,7 +295,27 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    } catch (e) {
+      // Safari iOS has a ~5MB localStorage limit. If we hit it, retry without
+      // the large image blobs — entries and metadata are preserved.
+      if (e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED")) {
+        try {
+          const stripped = {
+            ...store,
+            entries: store.entries.map((entry) => ({
+              ...entry,
+              photoDataUrl: "",
+              art: { ...entry.art, imageDataUrl: undefined }
+            }))
+          };
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
+        } catch {
+          // Storage completely full — silently skip; Supabase sync still has the data.
+        }
+      }
+    }
 
     const client = supabase.current;
     const guestId = syncMeta.current.guestId;
