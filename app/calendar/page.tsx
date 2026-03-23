@@ -749,6 +749,7 @@ function groupByMonth(entries: MealEntry[]) {
 export default function MyPagesPage() {
   const { entries, ready } = useDiary();
   const [tab, setTab] = useState<"scrapbook" | "stacks">("scrapbook");
+  const [weekIndex, setWeekIndex] = useState(0);
 
   const months = useMemo(() => groupByMonth(entries), [entries]);
   const weeks = useMemo(() => {
@@ -817,11 +818,31 @@ export default function MyPagesPage() {
       </div>
 
       {tab === "scrapbook" ? (
-        /* ── Weekly scrapbook view ── */
-        <div className="space-y-6">
-          {weeks.map((week) => (
-            <WeekSpread key={week.weekKey} week={week} />
-          ))}
+        /* ── Weekly scrapbook view (paginated) ── */
+        <div>
+          {/* Prev / week label / Next */}
+          <div className="mb-4 flex items-center justify-between px-1">
+            <button
+              onClick={() => setWeekIndex((i) => Math.min(i + 1, weeks.length - 1))}
+              disabled={weekIndex >= weeks.length - 1}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 text-cocoa shadow-sm ring-1 ring-[#EAD6C7]/40 transition disabled:opacity-30"
+              aria-label="Previous week"
+            >
+              ‹
+            </button>
+            <span className="text-xs font-semibold tracking-[0.18em] text-cocoa/60">
+              {weeks[weekIndex] ? formatWeekRange(weeks[weekIndex].weekStart) : ""}
+            </span>
+            <button
+              onClick={() => setWeekIndex((i) => Math.max(i - 1, 0))}
+              disabled={weekIndex === 0}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 text-cocoa shadow-sm ring-1 ring-[#EAD6C7]/40 transition disabled:opacity-30"
+              aria-label="Next week"
+            >
+              ›
+            </button>
+          </div>
+          {weeks[weekIndex] && <WeekSpread key={weeks[weekIndex].weekKey} week={weeks[weekIndex]} />}
         </div>
       ) : (
         /* ── Stacks view (12 vintage album covers) ── */
