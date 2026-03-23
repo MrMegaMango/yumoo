@@ -30,6 +30,11 @@ export function EntryForm({
   const streak = getCurrentStreak(entries);
   const weekGoal = 7;
   const daysLeft = Math.max(0, weekGoal - streak);
+  const [recapHref, setRecapHref] = useState<string | null>(null);
+  useEffect(() => {
+    const now = new Date();
+    setRecapHref(`/recap/${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+  }, []);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState(existingEntry?.photoDataUrl ?? "");
   const [caption] = useState(existingEntry?.caption ?? "");
@@ -305,9 +310,9 @@ export function EntryForm({
         <Card className="border-[#E8BCB7] bg-[#FFF3F1] text-sm text-[#8F403E]">{error}</Card>
       ) : null}
 
-      {mode === "create" ? (
+      {mode === "create" && recapHref ? (
         <Link
-          href={`/recap/${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`}
+          href={recapHref}
           className={daysLeft === 0 ? undefined : "pointer-events-none"}
           tabIndex={daysLeft === 0 ? undefined : -1}
           style={{
