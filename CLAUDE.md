@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Keeping This File Updated
+
+**Whenever you add or change API routes, environment variables, database tables/functions, or significant architecture, update the relevant section of this file before finishing the task.** This file is the primary orientation document for new Claude sessions.
+
 ## Commands
 
 ```bash

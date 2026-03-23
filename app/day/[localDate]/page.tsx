@@ -24,12 +24,10 @@ export default function DayPage({
     <AppShell
       title={formatFullDate(localDate)}
       subtitle="Original photos and generated art, all tucked into one day stack."
+      fabHref={`/entry/new?date=${localDate}`}
     >
       <div className="flex items-center justify-between">
         <Tag active>{ready ? `${dayEntries.length} entries` : "Loading"}</Tag>
-        <Link href={`/entry/new?date=${localDate}`} className={buttonClasses("secondary")}>
-          Add to this day
-        </Link>
       </div>
 
       {ready && dayEntries.length === 0 ? (

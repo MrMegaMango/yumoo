@@ -24,11 +24,16 @@ export function ArtTile({
   const backgroundStyle = paletteBackground(entry.art.palette) as CSSProperties;
   const artImageUrl =
     entry.art.status === "ready" ? entry.art.imageDataUrl : undefined;
+  const outOfCredits =
+    entry.art.status === "failed" &&
+    entry.art.error?.toLowerCase().includes("credits");
   const statusLabel =
     entry.art.status === "ready"
       ? "Art ready"
       : entry.art.status === "failed"
-        ? "Retry art"
+        ? outOfCredits
+          ? "No credits left"
+          : "Retry art"
         : "Generating art";
   const captionTextColor = artImageUrl ? "text-white" : "text-ink";
 

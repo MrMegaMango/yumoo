@@ -39,6 +39,9 @@ export default function EntryDetailPage({
   }
 
   const currentEntry = entry;
+  const outOfCredits =
+    currentEntry.art.status === "failed" &&
+    currentEntry.art.error?.toLowerCase().includes("credits");
 
   function handleDelete() {
     if (!window.confirm("Delete this entry?")) {
@@ -67,18 +70,28 @@ export default function EntryDetailPage({
       </Card>
 
       <div className="flex gap-3">
-        <Button
-          className="flex-1"
-          variant="secondary"
-          onClick={() => retryArt(currentEntry.id)}
-          disabled={currentEntry.art.status === "queued"}
-        >
-          {currentEntry.art.status === "queued"
-            ? "Generating art..."
-            : currentEntry.art.status === "failed"
-              ? "Retry art"
-              : "Regenerate art"}
-        </Button>
+        {outOfCredits ? (
+          <Button
+            className="flex-1"
+            variant="secondary"
+            onClick={() => router.push("/settings")}
+          >
+            Get more credits
+          </Button>
+        ) : (
+          <Button
+            className="flex-1"
+            variant="secondary"
+            onClick={() => retryArt(currentEntry.id)}
+            disabled={currentEntry.art.status === "queued"}
+          >
+            {currentEntry.art.status === "queued"
+              ? "Generating art..."
+              : currentEntry.art.status === "failed"
+                ? "Retry art"
+                : "Regenerate art"}
+          </Button>
+        )}
         <Button className="flex-1" variant="danger" onClick={handleDelete}>
           Delete
         </Button>

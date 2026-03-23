@@ -10,6 +10,7 @@ type AppShellProps = {
   subtitle?: string;
   children: ReactNode;
   showFab?: boolean;
+  fabHref?: string;
   headerTrailing?: ReactNode;
 };
 
@@ -18,6 +19,7 @@ export function AppShell({
   subtitle,
   children,
   showFab = true,
+  fabHref = "/entry/new",
   headerTrailing
 }: AppShellProps) {
   return (
@@ -37,7 +39,7 @@ export function AppShell({
 
       {showFab ? (
         <Link
-          href="/entry/new"
+          href={fabHref}
           className={buttonClasses(
             "primary",
             "fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2 shadow-lift"
