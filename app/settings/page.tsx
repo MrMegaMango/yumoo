@@ -709,14 +709,14 @@ export default function SettingsPage() {
                   disabled={topupPending !== null}
                   variant="secondary"
                 >
-                  {topupPending === "10" ? "Opening…" : "10 credits — $1"}
+                  {topupPending === "10" ? "Opening…" : "10 credits — $0.99"}
                 </Button>
                 <Button
                   onClick={() => handleTopUp("50")}
                   disabled={topupPending !== null}
                   variant="secondary"
                 >
-                  {topupPending === "50" ? "Opening…" : "50 credits — $4"}
+                  {topupPending === "50" ? "Opening…" : "50 credits — $3.99"}
                 </Button>
               </div>
             )}

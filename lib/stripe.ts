@@ -37,18 +37,18 @@ export const CREDIT_PACKAGES: Record<
 > = {
   "10": {
     credits: 10,
-    label: "$1.00",
+    label: "$0.99",
     priceEnvKey: "STRIPE_PRICE_10_CREDITS",
     productName: "10 Yumoo Credits",
-    unitAmount: 100,
+    unitAmount: 99,
     currency: "usd"
   },
   "50": {
     credits: 50,
-    label: "$4.00",
+    label: "$3.99",
     priceEnvKey: "STRIPE_PRICE_50_CREDITS",
     productName: "50 Yumoo Credits",
-    unitAmount: 400,
+    unitAmount: 399,
     currency: "usd"
   }
 };
