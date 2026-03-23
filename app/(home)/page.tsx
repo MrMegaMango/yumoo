@@ -1,8 +1,15 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 
 import { buttonClasses } from "@/components/ui";
 
 export default function LandingPage() {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
   return (
     <main className="mx-auto flex min-h-[100dvh] max-h-[100dvh] overflow-hidden max-w-[430px] flex-col justify-between px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(2rem+env(safe-area-inset-top))]">
       {/* Hero */}
