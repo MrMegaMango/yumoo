@@ -306,21 +306,29 @@ export function EntryForm({
       ) : null}
 
       {mode === "create" ? (
-        <div className="rounded-[20px] p-4" style={{
-          background: streak === 0
-            ? "#FFF5EE"
-            : streak <= 2
-            ? "linear-gradient(135deg, #FFF5EE, #FFE0CC)"
-            : streak <= 4
-            ? "linear-gradient(135deg, #FFE0CC, #FFBFA3, #FFA4E0)"
-            : streak <= 6
-            ? "linear-gradient(135deg, #FFBFA3, #FF8ED4, #B88CFF)"
-            : "linear-gradient(135deg, #FF8ED4, #B88CFF, #7DD3FC, #FDE68A)"
-        }}>
+        <Link
+          href={`/recap/${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`}
+          className={daysLeft === 0 ? undefined : "pointer-events-none"}
+          tabIndex={daysLeft === 0 ? undefined : -1}
+          style={{
+            display: "block",
+            borderRadius: "20px",
+            padding: "1rem",
+            background: streak === 0
+              ? "#FFF5EE"
+              : streak <= 2
+              ? "linear-gradient(135deg, #FFF5EE, #FFE0CC)"
+              : streak <= 4
+              ? "linear-gradient(135deg, #FFE0CC, #FFBFA3, #FFA4E0)"
+              : streak <= 6
+              ? "linear-gradient(135deg, #FFBFA3, #FF8ED4, #B88CFF)"
+              : "linear-gradient(135deg, #FF8ED4, #B88CFF, #7DD3FC, #FDE68A)"
+          }}
+        >
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold text-ink">
               {daysLeft === 0
-                ? "✨ art recap unlocked let's gooo"
+                ? "✨ art recap unlocked let's gooo →"
                 : daysLeft >= 6
                 ? `${daysLeft} more entries until your weekly art is ready 🍳`
                 : daysLeft >= 4
@@ -352,7 +360,7 @@ export function EntryForm({
               />
             ))}
           </div>
-        </div>
+        </Link>
       ) : null}
 
       <div className="flex items-center gap-3">
