@@ -783,13 +783,32 @@ export default function MyPagesPage() {
         scale: 2,
         useCORS: true,
       });
-      const link = document.createElement("a");
       const week = weeks[weekIndex];
-      link.download = `yumoo-${week ? week.weekKey : "week"}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    } catch {
-      // silently fail
+      const fileName = `yumoo-${week ? week.weekKey : "week"}.png`;
+
+      // Convert canvas to blob for sharing / saving
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+
+      if (!blob) return;
+
+      // Mobile: use Web Share API so users can save to photos directly
+      if (navigator.share && navigator.canShare?.({ files: [new File([blob], fileName, { type: "image/png" })] })) {
+        const file = new File([blob], fileName, { type: "image/png" });
+        await navigator.share({ files: [file] });
+      } else {
+        // Desktop fallback: trigger download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.download = fileName;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      // User cancelled share sheet — not an error
+      if (e instanceof Error && e.name === "AbortError") return;
     } finally {
       setSaving(false);
     }
@@ -930,14 +949,33 @@ export default function MyPagesPage() {
           />
           <p className="mt-3 text-center text-sm font-medium text-white/80">{lightbox.caption}</p>
           <div className="mt-4 flex gap-3">
-            <a
-              href={lightbox.src}
-              download={`yumoo-${lightbox.caption.toLowerCase().replace(/\s+/g, "-")}.png`}
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  const res = await fetch(lightbox.src);
+                  const blob = await res.blob();
+                  const fileName = `yumoo-${lightbox.caption.toLowerCase().replace(/\s+/g, "-")}.png`;
+                  const file = new File([blob], fileName, { type: blob.type });
+
+                  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                    await navigator.share({ files: [file] });
+                  } else {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.download = fileName;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }
+                } catch {
+                  // User cancelled or share failed
+                }
+              }}
               className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-sm transition hover:bg-cream"
             >
               Save image
-            </a>
+            </button>
             <button
               onClick={() => setLightbox(null)}
               className="rounded-full bg-white/20 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/30"
