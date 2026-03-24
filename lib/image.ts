@@ -1,4 +1,4 @@
-export async function compressImageFile(file: File, maxSide = 1600) {
+export async function compressImageFile(file: File, maxSide = 1024) {
   const dataUrl = await readFileAsDataUrl(file);
   const image = await loadImage(dataUrl);
   const longestSide = Math.max(image.width, image.height);
@@ -13,7 +13,7 @@ export async function compressImageFile(file: File, maxSide = 1600) {
   }
 
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.84);
+  return canvas.toDataURL("image/jpeg", 0.7);
 }
 
 function readFileAsDataUrl(file: File) {

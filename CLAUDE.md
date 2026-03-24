@@ -57,7 +57,7 @@ Every page consumes this context. There is no server-side page data fetching for
 
 ### Entry Lifecycle
 
-1. User submits `entry-form.tsx` → photo compressed client-side via `lib/image.ts` (max 1600px, JPEG 0.84) → stored as base64 data URL
+1. User submits `entry-form.tsx` → photo compressed client-side via `lib/image.ts` (max 1024px, JPEG 0.7) → stored as base64 data URL
 2. If Supabase is configured, the browser anonymously authenticates and merges cached entries with the remote guest diary row
 3. Entry saved with `art.status: "queued"`, a deterministic fallback palette from `lib/art.ts`, and a `jobId`
 4. `DiaryProvider` sends the entry photo plus mood/tag/caption context to `/api/art/generate`
