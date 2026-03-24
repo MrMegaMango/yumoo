@@ -1079,21 +1079,35 @@ export default function MyPagesPage() {
               onClick={async (e) => {
                 e.stopPropagation();
                 try {
-                  const res = await fetch(lightbox.src);
-                  const blob = await res.blob();
+                  // Convert data URL to blob without fetch (iOS Safari can't fetch data URLs)
+                  const [header, data] = lightbox.src.split(",");
+                  const mime = header.match(/:(.*?);/)?.[1] ?? "image/png";
+                  const bytes = atob(data);
+                  const arr = new Uint8Array(bytes.length);
+                  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+                  const blob = new Blob([arr], { type: mime });
                   const fileName = `yumoo-${lightbox.caption.toLowerCase().replace(/\s+/g, "-")}.png`;
-                  const file = new File([blob], fileName, { type: blob.type });
 
-                  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-                    await navigator.share({ files: [file] });
-                  } else {
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
-                    link.download = fileName;
-                    link.href = url;
-                    link.click();
-                    URL.revokeObjectURL(url);
+                  // Try Web Share API first (mobile)
+                  try {
+                    const file = new File([blob], fileName, { type: mime });
+                    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                      await navigator.share({ files: [file] });
+                      return;
+                    }
+                  } catch (shareErr) {
+                    if (shareErr instanceof Error && shareErr.name === "AbortError") return;
                   }
+
+                  // Fallback: download
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.download = fileName;
+                  link.href = url;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  setTimeout(() => URL.revokeObjectURL(url), 5000);
                 } catch {
                   // User cancelled or share failed
                 }
