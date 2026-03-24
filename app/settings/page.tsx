@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const [emailCode, setEmailCode] = useState("");
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
   const [upgradeAction, setUpgradeAction] = useState<
-    "google" | "send-email" | "verify-email" | "resend-email" | null
+    "send-email" | "verify-email" | "resend-email" | null
   >(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState<
     "account" | "email" | "google" | null
@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const [signInCode, setSignInCode] = useState("");
   const [signInNotice, setSignInNotice] = useState<string | null>(null);
   const [signInAction, setSignInAction] = useState<
-    "google" | "send-email" | "verify-code" | "resend" | null
+    "send-email" | "verify-code" | "resend" | null
   >(null);
   const [signInSuccess, setSignInSuccess] = useState(false);
   const [topupPending, setTopupPending] = useState<"10" | "50" | "lifetime" | null>(null);
@@ -66,11 +66,9 @@ export default function SettingsPage() {
     upgradeError,
     upgradePending,
     upgradeWithEmail,
-    upgradeWithGoogle,
     verifyEmailUpgradeCode,
     signInError,
     signInPending,
-    signInWithGoogle,
     signInWithEmail,
     verifySignInCode,
     resendSignInCode,
@@ -133,19 +131,6 @@ export default function SettingsPage() {
     setEmailCode("");
     setEmailNotice(null);
   }, [accountStatus]);
-
-  async function handleGoogleSignIn() {
-    setSignInNotice(null);
-    setSignInAction("google");
-
-    try {
-      await signInWithGoogle();
-    } catch {
-      return;
-    } finally {
-      setSignInAction(null);
-    }
-  }
 
   async function handleEmailSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -304,19 +289,6 @@ export default function SettingsPage() {
     }
 
     clearAll();
-  }
-
-  async function handleGoogleUpgrade() {
-    setEmailNotice(null);
-    setUpgradeAction("google");
-
-    try {
-      await upgradeWithGoogle();
-    } catch {
-      return;
-    } finally {
-      setUpgradeAction(null);
-    }
   }
 
   async function handleEmailUpgrade(event: FormEvent<HTMLFormElement>) {
@@ -530,9 +502,6 @@ export default function SettingsPage() {
                   place, but it becomes tied to Google or a verified email code instead of a guest-only session.
                 </p>
                 <div className="grid gap-3">
-                  <Button onClick={handleGoogleUpgrade} disabled={upgradePending}>
-                    {upgradeAction === "google" ? "Opening Google…" : "Link Google"}
-                  </Button>
                   {!pendingEmailUpgrade ? (
                     <form className="grid gap-3" onSubmit={handleEmailUpgrade}>
                       <input
@@ -621,9 +590,6 @@ export default function SettingsPage() {
                   Already have a saved account? Sign in to load your diary on this device.
                 </p>
                 <div className="grid gap-3">
-                  <Button onClick={handleGoogleSignIn} disabled={signInPending}>
-                    {signInAction === "google" ? "Opening Google…" : "Sign in with Google"}
-                  </Button>
                   {!pendingEmailSignIn ? (
                     <form className="grid gap-3" onSubmit={handleEmailSignIn}>
                       <input
