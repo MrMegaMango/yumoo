@@ -300,21 +300,35 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     } catch (e) {
-      // Safari iOS has a ~5MB localStorage limit. If we hit it, retry without
-      // the large image blobs — entries and metadata are preserved.
+      // Safari iOS has a ~5MB localStorage limit. If we hit it, progressively
+      // strip image blobs — art first (regeneratable), then photos — while
+      // keeping entry metadata intact so Supabase sync can restore images.
       if (e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED")) {
+        // First try: strip only generated art images (can be regenerated)
         try {
-          const stripped = {
+          const artStripped = {
             ...store,
             entries: store.entries.map((entry) => ({
               ...entry,
-              photoDataUrl: "",
               art: { ...entry.art, imageDataUrl: undefined }
             }))
           };
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(artStripped));
         } catch {
-          // Storage completely full — silently skip; Supabase sync still has the data.
+          // Still too large — strip photos too
+          try {
+            const allStripped = {
+              ...store,
+              entries: store.entries.map((entry) => ({
+                ...entry,
+                photoDataUrl: "",
+                art: { ...entry.art, imageDataUrl: undefined }
+              }))
+            };
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(allStripped));
+          } catch {
+            // Storage completely full — silently skip; Supabase sync still has the data.
+          }
         }
       }
     }

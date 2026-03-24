@@ -103,10 +103,22 @@ export function mergeStores(
     for (const entry of sourceStore?.entries ?? []) {
       const current = mergedEntries.get(entry.id);
 
-      if (!current || new Date(entry.updatedAt).getTime() >= new Date(current.updatedAt).getTime()) {
+      if (!current) {
+        mergedEntries.set(entry.id, { ...entry, userId: guestId });
+      } else {
+        // Pick the newer entry, but fill in image data from the other if
+        // the winner was stripped (e.g. by the localStorage quota handler).
+        const newer = new Date(entry.updatedAt).getTime() >= new Date(current.updatedAt).getTime() ? entry : current;
+        const older = newer === entry ? current : entry;
+
         mergedEntries.set(entry.id, {
-          ...entry,
-          userId: guestId
+          ...newer,
+          userId: guestId,
+          photoDataUrl: newer.photoDataUrl || older.photoDataUrl,
+          art: {
+            ...newer.art,
+            imageDataUrl: newer.art.imageDataUrl || older.art.imageDataUrl
+          }
         });
       }
     }
