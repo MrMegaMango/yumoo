@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
@@ -522,7 +522,7 @@ const polaroidLayouts = [
   { col: 0, rotate: -2.5, xOff: 2, yOff: 0 },
 ];
 
-function WeekSpread({ week }: { week: WeekGroup }) {
+function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: string, caption: string) => void }) {
   const col0 = week.days.map((entry, i) => ({ entry, i })).filter((_, idx) => polaroidLayouts[idx].col === 0);
   const col1 = week.days.map((entry, i) => ({ entry, i })).filter((_, idx) => polaroidLayouts[idx].col === 1);
 
@@ -536,8 +536,11 @@ function WeekSpread({ week }: { week: WeekGroup }) {
       const s = seed(entry.id);
       const showSticker = s % 2 === 0;
 
+      const imgSrc = entry.art.imageDataUrl ?? entry.photoDataUrl;
+      const caption = entry.caption || entry.mood || "Meal";
+
       return (
-        <Link href={`/entry/${entry.id}`} className="group block">
+        <div className="group block">
           <div
             className="relative rounded-[14px] bg-white p-[6px] pb-8 transition-transform duration-200 group-hover:scale-[1.04] group-hover:z-10"
             style={{
@@ -549,22 +552,26 @@ function WeekSpread({ week }: { week: WeekGroup }) {
             <WashiStrip entryId={entry.id} position={s % 2 === 0 ? "top-left" : "top-right"} />
             <Paperclip entryId={entry.id} />
 
-            <div className="relative overflow-hidden rounded-[10px]">
+            <button
+              type="button"
+              className="relative w-full overflow-hidden rounded-[10px]"
+              onClick={() => onImageTap?.(imgSrc, caption)}
+            >
               <img
-                src={entry.art.imageDataUrl ?? entry.photoDataUrl}
+                src={imgSrc}
                 alt={entry.mood ? `${entry.mood} meal` : "Meal"}
                 className="block aspect-[4/5] w-full object-cover"
               />
-            </div>
+            </button>
 
-            <div className="mt-1.5 px-1">
+            <Link href={`/entry/${entry.id}`} className="mt-1.5 block px-1">
               <p className="text-[10px] font-bold tracking-[0.18em] text-cocoa/60">
                 {dayLabels[dayIndex]} {dayNum}
               </p>
               <p className="mt-0.5 truncate text-[12px] text-ink">
-                {(entry.caption || entry.mood || "meal").toLowerCase()}
+                {caption.toLowerCase()}
               </p>
-            </div>
+            </Link>
 
             {showSticker && (
               <span
@@ -579,7 +586,7 @@ function WeekSpread({ week }: { week: WeekGroup }) {
               </span>
             )}
           </div>
-        </Link>
+        </div>
       );
     }
 
@@ -750,6 +757,9 @@ export default function MyPagesPage() {
   const { entries, ready } = useDiary();
   const [tab, setTab] = useState<"scrapbook" | "stacks">("scrapbook");
   const [weekIndex, setWeekIndex] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
+  const spreadRef = useRef<HTMLDivElement>(null);
 
   const months = useMemo(() => groupByMonth(entries), [entries]);
   const weeks = useMemo(() => {
@@ -761,6 +771,29 @@ export default function MyPagesPage() {
     }
     return w;
   }, [entries]);
+
+  const handleSaveImage = useCallback(async () => {
+    const el = spreadRef.current;
+    if (!el || saving) return;
+    setSaving(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(el, {
+        backgroundColor: "#FFF5EA",
+        scale: 2,
+        useCORS: true,
+      });
+      const link = document.createElement("a");
+      const week = weeks[weekIndex];
+      link.download = `yumoo-${week ? week.weekKey : "week"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch {
+      // silently fail
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, weeks, weekIndex]);
 
   return (
     <AppShell
@@ -843,7 +876,20 @@ export default function MyPagesPage() {
               ›
             </button>
           </div>
-          {weeks[weekIndex] && <WeekSpread key={weeks[weekIndex].weekKey} week={weeks[weekIndex]} />}
+          <div ref={spreadRef}>
+            {weeks[weekIndex] && <WeekSpread key={weeks[weekIndex].weekKey} week={weeks[weekIndex]} onImageTap={(src, caption) => setLightbox({ src, caption })} />}
+          </div>
+
+          {/* Save as image */}
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={handleSaveImage}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-full bg-white/70 px-5 py-2.5 text-sm font-semibold text-cocoa shadow-sm ring-1 ring-[#EAD6C7]/40 transition hover:bg-white disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save as photo"}
+            </button>
+          </div>
         </div>
       ) : (
         /* ── Stacks view (12 vintage album covers) ── */
@@ -866,6 +912,38 @@ export default function MyPagesPage() {
                 />
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Lightbox overlay ── */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox.src}
+            alt={lightbox.caption}
+            className="max-h-[75vh] max-w-full rounded-xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="mt-3 text-center text-sm font-medium text-white/80">{lightbox.caption}</p>
+          <div className="mt-4 flex gap-3">
+            <a
+              href={lightbox.src}
+              download={`yumoo-${lightbox.caption.toLowerCase().replace(/\s+/g, "-")}.png`}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-sm transition hover:bg-cream"
+            >
+              Save image
+            </a>
+            <button
+              onClick={() => setLightbox(null)}
+              className="rounded-full bg-white/20 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/30"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
