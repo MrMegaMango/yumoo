@@ -33,8 +33,8 @@ export const metadata: Metadata = {
   description: "A cute, visual food diary that turns meal tracking into a soft little monthly keepsake.",
   applicationName: "Yumoo",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg"
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png"
   },
   appleWebApp: {
     capable: true,
