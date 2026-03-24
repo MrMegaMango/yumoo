@@ -782,6 +782,7 @@ export default function MyPagesPage() {
         backgroundColor: "#FFF5EA",
         scale: 2,
         useCORS: true,
+        allowTaint: true,
       });
       const week = weeks[weekIndex];
       const fileName = `yumoo-${week ? week.weekKey : "week"}.png`;
@@ -793,22 +794,38 @@ export default function MyPagesPage() {
 
       if (!blob) return;
 
-      // Mobile: use Web Share API so users can save to photos directly
-      if (navigator.share && navigator.canShare?.({ files: [new File([blob], fileName, { type: "image/png" })] })) {
+      // Try Web Share API first (works on most mobile browsers)
+      try {
         const file = new File([blob], fileName, { type: "image/png" });
-        await navigator.share({ files: [file] });
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+      } catch (shareErr) {
+        if (shareErr instanceof Error && shareErr.name === "AbortError") return;
+        // Share failed — fall through to other methods
+      }
+
+      // Try download link (works on desktop, some Android browsers)
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = fileName;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // If download likely didn't work (mobile Safari), open image in new tab
+      // so user can long-press to save
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.open(url, "_blank");
       } else {
-        // Desktop fallback: trigger download
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.download = fileName;
-        link.href = url;
-        link.click();
         URL.revokeObjectURL(url);
       }
-    } catch (e) {
-      // User cancelled share sheet — not an error
-      if (e instanceof Error && e.name === "AbortError") return;
+    } catch {
+      // html2canvas or other failure — fall back to opening a screenshot hint
+      alert("Could not generate image. Try taking a screenshot instead.");
     } finally {
       setSaving(false);
     }
