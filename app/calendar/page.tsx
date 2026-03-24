@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
@@ -75,6 +75,22 @@ function getCurrentWeekGroup(): WeekGroup {
   const ws = getWeekStart(new Date());
   const days: null[] = [null, null, null, null, null, null, null];
   return { weekKey: toLocalDateString(ws), weekStart: ws, days };
+}
+
+/* ── Canvas rounded rect helper ── */
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 /* ── Deterministic seed ── */
@@ -759,7 +775,7 @@ export default function MyPagesPage() {
   const [weekIndex, setWeekIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
-  const spreadRef = useRef<HTMLDivElement>(null);
+
 
   const months = useMemo(() => groupByMonth(entries), [entries]);
   const weeks = useMemo(() => {
@@ -773,40 +789,144 @@ export default function MyPagesPage() {
   }, [entries]);
 
   const handleSaveImage = useCallback(async () => {
-    const el = spreadRef.current;
-    if (!el || saving) return;
+    if (saving) return;
+    const week = weeks[weekIndex];
+    if (!week) return;
     setSaving(true);
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(el, {
-        backgroundColor: "#FFF5EA",
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-      });
-      const week = weeks[weekIndex];
-      const fileName = `yumoo-${week ? week.weekKey : "week"}.png`;
 
-      // Convert canvas to blob for sharing / saving
+    try {
+      // Collect all entry images for this week
+      const filledDays = week.days
+        .map((entry, i) => ({ entry, dayIndex: i }))
+        .filter((d): d is { entry: MealEntry; dayIndex: number } => d.entry !== null);
+
+      if (filledDays.length === 0) {
+        setSaving(false);
+        return;
+      }
+
+      // Load all images first
+      const loadImg = (src: string) =>
+        new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+
+      const loaded = await Promise.all(
+        filledDays.map(async ({ entry, dayIndex }) => ({
+          img: await loadImg(entry.art.imageDataUrl ?? entry.photoDataUrl),
+          caption: entry.caption || entry.mood || "Meal",
+          dayIndex,
+        }))
+      );
+
+      // Build canvas collage
+      const cols = Math.min(loaded.length, 3);
+      const rows = Math.ceil(loaded.length / cols);
+      const cellW = 360;
+      const cellH = 450;
+      const pad = 24;
+      const headerH = 100;
+      const footerH = 60;
+      const canvasW = cols * cellW + (cols + 1) * pad;
+      const canvasH = headerH + rows * cellH + (rows + 1) * pad + footerH;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+      const ctx = canvas.getContext("2d")!;
+
+      // Background
+      ctx.fillStyle = "#FFF5EA";
+      ctx.fillRect(0, 0, canvasW, canvasH);
+
+      // Header
+      ctx.fillStyle = "#3D2E24";
+      ctx.font = "bold 36px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(formatWeekRange(week.weekStart), canvasW / 2, 55);
+      ctx.fillStyle = "#A08060";
+      ctx.font = "18px sans-serif";
+      ctx.fillText("weekly food art", canvasW / 2, 82);
+
+      // Draw each image as a polaroid card
+      loaded.forEach(({ img, caption }, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = pad + col * (cellW + pad);
+        const y = headerH + pad + row * (cellH + pad);
+
+        // Card shadow
+        ctx.fillStyle = "rgba(107,88,78,0.08)";
+        roundRect(ctx, x + 4, y + 4, cellW, cellH, 16);
+        ctx.fill();
+
+        // Card background
+        ctx.fillStyle = "#FFFFFF";
+        roundRect(ctx, x, y, cellW, cellH, 16);
+        ctx.fill();
+
+        // Image area (with padding inside card)
+        const imgPad = 10;
+        const imgW = cellW - imgPad * 2;
+        const imgH = cellH - 80;
+        const imgX = x + imgPad;
+        const imgY = y + imgPad;
+
+        // Clip and draw image
+        ctx.save();
+        roundRect(ctx, imgX, imgY, imgW, imgH, 12);
+        ctx.clip();
+        const scale = Math.max(imgW / img.width, imgH / img.height);
+        const sw = imgW / scale;
+        const sh = imgH / scale;
+        const sx = (img.width - sw) / 2;
+        const sy = (img.height - sh) / 2;
+        ctx.drawImage(img, sx, sy, sw, sh, imgX, imgY, imgW, imgH);
+        ctx.restore();
+
+        // Caption
+        ctx.fillStyle = "#3D2E24";
+        ctx.font = "bold 20px sans-serif";
+        ctx.textAlign = "left";
+        const truncated = caption.length > 28 ? caption.slice(0, 26) + "…" : caption;
+        ctx.fillText(truncated, x + 14, y + cellH - 24);
+
+        // Day label
+        ctx.fillStyle = "#A08060";
+        ctx.font = "14px sans-serif";
+        const d = new Date(week.weekStart);
+        d.setDate(d.getDate() + loaded[i].dayIndex);
+        ctx.fillText(`${dayLabels[loaded[i].dayIndex]} ${d.getDate()}`, x + 14, y + cellH - 48);
+      });
+
+      // Footer branding
+      ctx.fillStyle = "#C4A882";
+      ctx.font = "bold 20px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Yumoo", canvasW / 2, canvasH - 22);
+
+      // Convert to blob and share/download
+      const fileName = `yumoo-${week.weekKey}.png`;
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/png")
       );
-
       if (!blob) return;
 
-      // Try Web Share API first (works on most mobile browsers)
+      // Try Web Share API first
       try {
         const file = new File([blob], fileName, { type: "image/png" });
         if (navigator.share && navigator.canShare?.({ files: [file] })) {
           await navigator.share({ files: [file] });
           return;
         }
-      } catch (shareErr) {
-        if (shareErr instanceof Error && shareErr.name === "AbortError") return;
-        // Share failed — fall through to other methods
+      } catch (e) {
+        if (e instanceof Error && e.name === "AbortError") return;
       }
 
-      // Try download link (works on desktop, some Android browsers)
+      // Fallback: download
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.download = fileName;
@@ -814,17 +934,8 @@ export default function MyPagesPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // If download likely didn't work (mobile Safari), open image in new tab
-      // so user can long-press to save
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        window.open(url, "_blank");
-      } else {
-        URL.revokeObjectURL(url);
-      }
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch {
-      // html2canvas or other failure — fall back to opening a screenshot hint
       alert("Could not generate image. Try taking a screenshot instead.");
     } finally {
       setSaving(false);
@@ -912,9 +1023,7 @@ export default function MyPagesPage() {
               ›
             </button>
           </div>
-          <div ref={spreadRef}>
-            {weeks[weekIndex] && <WeekSpread key={weeks[weekIndex].weekKey} week={weeks[weekIndex]} onImageTap={(src, caption) => setLightbox({ src, caption })} />}
-          </div>
+          {weeks[weekIndex] && <WeekSpread key={weeks[weekIndex].weekKey} week={weeks[weekIndex]} onImageTap={(src, caption) => setLightbox({ src, caption })} />}
 
           {/* Save as image */}
           <div className="mt-4 flex justify-center">
