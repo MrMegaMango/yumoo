@@ -11,6 +11,7 @@ type AppShellProps = {
   children: ReactNode;
   showFab?: boolean;
   fabHref?: string;
+  showInstallBanner?: boolean;
   headerTrailing?: ReactNode;
 };
 
@@ -20,6 +21,7 @@ export function AppShell({
   children,
   showFab = true,
   fabHref = "/entry/new",
+  showInstallBanner = true,
   headerTrailing
 }: AppShellProps) {
   return (
@@ -33,7 +35,7 @@ export function AppShell({
         {headerTrailing}
       </header>
 
-      <InstallBanner />
+      {showInstallBanner ? <InstallBanner /> : null}
 
       <main className="flex-1 space-y-5 pb-8">{children}</main>
 

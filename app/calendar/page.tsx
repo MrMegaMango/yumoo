@@ -766,6 +766,7 @@ export default function MyPagesPage() {
     <AppShell
       title="My Pages"
       subtitle="A quiet collection of your inner appetite."
+      showInstallBanner={false}
       headerTrailing={
         <div className="relative" style={{ rotate: "8deg" }}>
           {/* Paperclip holding the tag */}
