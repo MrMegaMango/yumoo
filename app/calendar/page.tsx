@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
@@ -941,6 +941,23 @@ export default function MyPagesPage() {
       setSaving(false);
     }
   }, [saving, weeks, weekIndex]);
+
+  // Prefetch images for adjacent weeks so navigation feels instant
+  useEffect(() => {
+    const adjacentIndexes = [weekIndex - 1, weekIndex + 1];
+    for (const i of adjacentIndexes) {
+      const week = weeks[i];
+      if (!week) continue;
+      for (const entry of week.days) {
+        if (!entry) continue;
+        const src = entry.art.imageUrl ?? entry.photoUrl;
+        if (src) {
+          const img = new Image();
+          img.src = src;
+        }
+      }
+    }
+  }, [weekIndex, weeks]);
 
   return (
     <AppShell
