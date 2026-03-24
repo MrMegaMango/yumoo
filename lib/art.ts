@@ -37,12 +37,14 @@ export function createQueuedArt(seed: string, updatedAt: string): EntryArt {
 export function createReadyArt(
   art: EntryArt,
   updatedAt: string,
-  result: ArtJobResult
+  result: ArtJobResult,
+  imageUrl?: string
 ): EntryArt {
   return {
     ...art,
     status: "ready",
-    imageDataUrl: result.imageDataUrl,
+    imageUrl,
+    imageDataUrl: imageUrl ? undefined : result.imageDataUrl,
     provider: result.provider,
     model: result.model,
     updatedAt,
@@ -59,6 +61,7 @@ export function createFailedArt(
   return {
     ...art,
     status: "failed",
+    imageUrl: undefined,
     imageDataUrl: undefined,
     updatedAt,
     error

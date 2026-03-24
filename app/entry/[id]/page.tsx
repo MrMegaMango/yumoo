@@ -63,7 +63,7 @@ export default function EntryDetailPage({
 
       <Card className="overflow-hidden p-0">
         <img
-          src={currentEntry.photoDataUrl}
+          src={currentEntry.photoUrl ?? currentEntry.photoDataUrl}
           alt={currentEntry.mood ? `${currentEntry.mood} Meal photo` : "Meal photo"}
           className="h-80 w-full object-cover"
         />

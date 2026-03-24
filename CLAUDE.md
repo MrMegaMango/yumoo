@@ -113,7 +113,7 @@ MealEntry {
 ### Planned (not yet implemented)
 
 - Standalone sign-in / recovery UI for returning saved-account users on new devices
-- Replace local cache + JSON diary blob with normalized DB rows + object storage; current browser storage use will grow quickly with generated art
+- Replace local cache + JSON diary blob with normalized DB rows (images now in Supabase Storage, but diary is still one JSONB blob per user)
 - Move art generation off the request path if durable jobs / rate limiting / retries are needed
 - Move in-memory art quotas to a shared backing store if strict serverless enforcement is required
 - Recap sharing (currently SVG download only)
@@ -137,6 +137,16 @@ STRIPE_PRICE_10_CREDITS      # Optional; Stripe price ID for the 10-credit packa
 STRIPE_PRICE_50_CREDITS      # Optional; Stripe price ID for the 50-credit package ($4.00)
 STRIPE_PRICE_TIP             # Optional; Stripe price ID for the tip jar product
 ```
+
+## Storage
+
+- Bucket: `meal-photos` (public) — stores original photos and generated art as separate files
+- File paths: `{userId}/{entryId}-photo.jpg` and `{userId}/{entryId}-art.jpg`
+- RLS: authenticated users can INSERT/DELETE only within their own `{userId}/` folder prefix
+- `lib/photo-storage.ts` exports `uploadPhoto()`, `uploadArt()`, `deleteEntryPhotos()`
+- New entries store a `photoUrl` (Storage URL) instead of `photoDataUrl` (base64); old entries still display via `photoDataUrl` fallback
+- Art results store `art.imageUrl` (Storage URL) instead of `art.imageDataUrl` (base64)
+- When art generation needs the photo, it fetches from `photoUrl` if `photoDataUrl` is empty
 
 ## Database
 

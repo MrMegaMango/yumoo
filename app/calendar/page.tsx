@@ -194,7 +194,7 @@ function ScrapbookCard({ entry }: { entry: MealEntry }) {
         {/* Art / Photo */}
         <div className="relative overflow-hidden rounded-[10px]">
           <img
-            src={entry.art.status === "ready" && entry.art.imageDataUrl ? entry.art.imageDataUrl : entry.photoDataUrl}
+            src={entry.art.status === "ready" ? (entry.art.imageUrl ?? entry.art.imageDataUrl ?? entry.photoUrl ?? entry.photoDataUrl) : (entry.photoUrl ?? entry.photoDataUrl)}
             alt={entry.mood ? `${entry.mood} meal` : "Meal"}
             className="block aspect-[4/5] w-full object-cover"
           />
@@ -552,7 +552,7 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
       const s = seed(entry.id);
       const showSticker = s % 2 === 0;
 
-      const imgSrc = entry.art.imageDataUrl ?? entry.photoDataUrl;
+      const imgSrc = entry.art.imageUrl ?? entry.art.imageDataUrl ?? entry.photoUrl ?? entry.photoDataUrl;
       const caption = entry.caption || entry.mood || "Meal";
 
       return (
@@ -816,7 +816,7 @@ export default function MyPagesPage() {
 
       const loaded = await Promise.all(
         filledDays.map(async ({ entry, dayIndex }) => ({
-          img: await loadImg(entry.art.imageDataUrl ?? entry.photoDataUrl),
+          img: await loadImg(entry.art.imageUrl ?? entry.art.imageDataUrl ?? entry.photoUrl ?? entry.photoDataUrl),
           caption: entry.caption || entry.mood || "Meal",
           dayIndex,
         }))

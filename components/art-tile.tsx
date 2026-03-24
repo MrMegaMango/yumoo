@@ -23,7 +23,9 @@ export function ArtTile({
 }) {
   const backgroundStyle = paletteBackground(entry.art.palette) as CSSProperties;
   const artImageUrl =
-    entry.art.status === "ready" ? entry.art.imageDataUrl : undefined;
+    entry.art.status === "ready"
+      ? (entry.art.imageUrl ?? entry.art.imageDataUrl)
+      : undefined;
   const outOfCredits =
     entry.art.status === "failed" &&
     entry.art.error?.toLowerCase().includes("credits");
@@ -68,7 +70,7 @@ export function ArtTile({
       </div>
       {size !== "sm" ? (
         <img
-          src={entry.photoDataUrl}
+          src={entry.photoUrl ?? entry.photoDataUrl}
           alt={entry.mood ? `${entry.mood} Meal photo` : "Meal photo"}
           className="absolute bottom-4 right-4 h-20 w-20 rounded-[22px] border border-white/70 object-cover shadow-card"
         />

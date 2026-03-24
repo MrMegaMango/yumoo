@@ -45,6 +45,7 @@ export type EntryArt = {
   promptVersion: string;
   styleVersion: string;
   palette: [string, string, string];
+  imageUrl?: string;
   imageDataUrl?: string;
   provider?: string;
   model?: string;
@@ -61,6 +62,7 @@ export type MealEntry = {
   mealType?: MealType;
   takenAt: string;
   localDate: string;
+  photoUrl?: string;
   photoDataUrl: string;
   createdAt: string;
   updatedAt: string;

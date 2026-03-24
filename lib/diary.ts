@@ -114,9 +114,11 @@ export function mergeStores(
         mergedEntries.set(entry.id, {
           ...newer,
           userId: guestId,
+          photoUrl: newer.photoUrl || older.photoUrl,
           photoDataUrl: newer.photoDataUrl || older.photoDataUrl,
           art: {
             ...newer.art,
+            imageUrl: newer.art.imageUrl || older.art.imageUrl,
             imageDataUrl: newer.art.imageDataUrl || older.art.imageDataUrl
           }
         });

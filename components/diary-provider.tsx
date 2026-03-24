@@ -28,6 +28,7 @@ import {
   upsertGuestDiaryStore
 } from "@/lib/guest-diary-db";
 import { compressImageFile } from "@/lib/image";
+import { deleteEntryPhotos, uploadArt, uploadPhoto } from "@/lib/photo-storage";
 import {
   buildAuthCallbackUrl,
   buildSignInCallbackUrl,
@@ -976,10 +977,24 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
     const headers: Record<string, string> = {
       "Content-Type": "application/json"
     };
+
+    // Resolve photo to base64 for the API — fetch from Storage URL if needed
+    let photoDataUrl = entry.photoDataUrl;
+    if (!photoDataUrl && entry.photoUrl) {
+      const photoResponse = await fetch(entry.photoUrl, { signal: controller.signal });
+      const blob = await photoResponse.blob();
+      photoDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
     const payload: ArtJobInput = {
       entryId: entry.id,
       userId: entry.userId,
-      photoDataUrl: entry.photoDataUrl,
+      photoDataUrl,
       caption: entry.caption,
       mood: entry.mood,
       mealType: entry.mealType,
@@ -1026,6 +1041,17 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
         setLifetimeAccess(true);
       }
 
+      // Upload generated art to Storage
+      let imageUrl: string | undefined;
+      const storageClient = supabase.current;
+      if (storageClient && result.imageDataUrl) {
+        try {
+          imageUrl = await uploadArt(storageClient, entry.userId, entry.id, result.imageDataUrl);
+        } catch {
+          // keep base64 as fallback
+        }
+      }
+
       setStore((current) => {
         if (!current) {
           return current;
@@ -1044,7 +1070,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
 
             return {
               ...item,
-              art: createReadyArt(item.art, timestamp, result)
+              art: createReadyArt(item.art, timestamp, result, imageUrl)
             };
           })
         };
@@ -1099,24 +1125,41 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
       : undefined;
 
     let photoDataUrl = input.photoDataUrl ?? existingEntry?.photoDataUrl ?? "";
+    let photoUrl = existingEntry?.photoUrl;
 
     if (input.photoFile) {
       photoDataUrl = await compressImageFile(input.photoFile);
+      photoUrl = undefined; // new photo — will upload below
     }
 
-    if (!photoDataUrl) {
+    if (!photoDataUrl && !photoUrl) {
       throw new Error("Add a meal photo first.");
     }
 
     const caption = input.caption.trim();
     const timestamp = new Date().toISOString();
-    const artSeed = `${caption}-${input.takenAt}-${existingEntry?.id ?? timestamp}`;
+    const entryId = existingEntry?.id ?? crypto.randomUUID();
+    const userId = syncMeta.current.guestId ?? currentStore.guestId;
+    const artSeed = `${caption}-${input.takenAt}-${entryId}`;
     const shouldRefreshArt =
       !existingEntry ||
       Boolean(input.photoFile) ||
       caption !== existingEntry.caption ||
       input.mood !== existingEntry.mood ||
       input.mealType !== existingEntry.mealType;
+
+    // Upload new photo to Storage when available
+    if (photoDataUrl && !photoUrl) {
+      const client = supabase.current;
+      if (client && userId) {
+        try {
+          photoUrl = await uploadPhoto(client, userId, entryId, photoDataUrl);
+          photoDataUrl = "";
+        } catch {
+          // keep base64 as fallback
+        }
+      }
+    }
 
     if (existingEntry && shouldRefreshArt) {
       abortArtRequest(existingEntry.id);
@@ -1130,6 +1173,7 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
           mealType: input.mealType,
           takenAt: input.takenAt,
           localDate: toLocalDateString(input.takenAt),
+          photoUrl,
           photoDataUrl,
           updatedAt: timestamp,
           art: shouldRefreshArt
@@ -1137,13 +1181,14 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
             : { ...existingEntry.art, updatedAt: timestamp }
         }
       : {
-          id: crypto.randomUUID(),
+          id: entryId,
           userId: currentStore.guestId,
           caption,
           mood: input.mood,
           mealType: input.mealType,
           takenAt: input.takenAt,
           localDate: toLocalDateString(input.takenAt),
+          photoUrl,
           photoDataUrl,
           createdAt: timestamp,
           updatedAt: timestamp,
@@ -1178,6 +1223,12 @@ export function DiaryProvider({ children }: { children: ReactNode }) {
 
   function deleteEntry(id: string) {
     abortArtRequest(id);
+
+    const client = supabase.current;
+    const userId = syncMeta.current.guestId;
+    if (client && userId) {
+      void deleteEntryPhotos(client, userId, id);
+    }
 
     setStore((current) => {
       if (!current) {
