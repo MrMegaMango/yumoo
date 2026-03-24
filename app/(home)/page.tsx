@@ -11,15 +11,15 @@ export default function LandingPage() {
     return () => { document.body.style.overflow = ""; };
   }, []);
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-h-[100dvh] overflow-hidden max-w-[430px] flex-col justify-between px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(2rem+env(safe-area-inset-top))]">
+    <main className="mx-auto flex min-h-[100dvh] max-h-[100dvh] overflow-hidden max-w-[430px] flex-col justify-between px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))]">
       {/* Hero */}
-      <section className="flex min-h-0 flex-1 flex-col gap-4">
+      <section className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="shrink-0">
           <p className="font-headline text-lg font-bold tracking-wide text-ink">Yumoo</p>
-          <h1 className="mt-4 max-w-[340px] text-[2.75rem] font-semibold leading-[1.05] tracking-tight text-ink">
+          <h1 className="mt-2 max-w-[340px] font-semibold leading-[1.05] tracking-tight text-ink" style={{ fontSize: "clamp(1.6rem, min(9vw, 4.5dvh), 2.75rem)" }}>
             A Scrapbook For How Life Tastes Today
           </h1>
-          <p className="mt-5 max-w-xs text-[15px] leading-7 text-cocoa">
+          <p className="mt-3 max-w-xs text-[15px] leading-6 text-cocoa">
             Link your daily food to your inner mood.
             <br />
             A quiet echo of how today felt.
