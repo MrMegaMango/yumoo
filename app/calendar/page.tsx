@@ -766,9 +766,11 @@ export default function MyPagesPage() {
       // Load all images first — use fetch for remote URLs to avoid
       // CORS-cache mismatch (images already cached without crossOrigin)
       const loadImg = async (src: string): Promise<HTMLImageElement> => {
+        if (!src) throw new Error("No image URL");
         let objectUrl: string | undefined;
         if (!src.startsWith("data:")) {
           const resp = await fetch(src, { mode: "cors" });
+          if (!resp.ok) throw new Error(`Fetch ${resp.status}: ${src.slice(0, 100)}`);
           const blob = await resp.blob();
           objectUrl = URL.createObjectURL(blob);
         }
@@ -780,7 +782,7 @@ export default function MyPagesPage() {
           };
           img.onerror = () => {
             if (objectUrl) URL.revokeObjectURL(objectUrl);
-            reject(new Error("Image load failed"));
+            reject(new Error(`Image load failed: ${src.slice(0, 100)}`));
           };
           img.src = objectUrl ?? src;
         });
@@ -788,7 +790,7 @@ export default function MyPagesPage() {
 
       const loaded = await Promise.all(
         filledDays.map(async ({ entry, dayIndex }) => ({
-          img: await loadImg(entry.art.imageUrl ?? entry.art.imageDataUrl ?? entry.photoUrl ?? entry.photoDataUrl),
+          img: await loadImg(entry.art.imageUrl || entry.art.imageDataUrl || entry.photoUrl || entry.photoDataUrl),
           caption: entry.caption || entry.mood || "Meal",
           dayIndex,
         }))
