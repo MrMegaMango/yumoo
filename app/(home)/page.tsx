@@ -4,8 +4,12 @@ import { useEffect } from "react";
 import Link from "next/link";
 
 import { buttonClasses } from "@/components/ui";
+import { useDiary } from "@/components/diary-provider";
 
 export default function LandingPage() {
+  const { entries } = useDiary();
+  const hasEntries = entries.length > 0;
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -38,12 +42,28 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="space-y-3 pb-2">
-        <p className="text-center text-[13px] leading-6 text-cocoa">
-          Your story starts with one bite
-        </p>
-        <Link href="/entry/new" className={buttonClasses("primary", "w-full")}>
-          Snap Today's Meal 📸
-        </Link>
+        {hasEntries ? (
+          <>
+            <p className="text-center text-[13px] leading-6 text-cocoa">
+              Welcome back — your scrapbook awaits
+            </p>
+            <Link href="/calendar" className={buttonClasses("primary", "w-full")}>
+              Open My Scrapbook
+            </Link>
+            <Link href="/entry/new" className={buttonClasses("secondary", "w-full")}>
+              Snap Today's Meal 📸
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="text-center text-[13px] leading-6 text-cocoa">
+              Your story starts with one bite
+            </p>
+            <Link href="/entry/new" className={buttonClasses("primary", "w-full")}>
+              Snap Today's Meal 📸
+            </Link>
+          </>
+        )}
       </section>
     </main>
   );
