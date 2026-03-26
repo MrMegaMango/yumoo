@@ -763,15 +763,28 @@ export default function MyPagesPage() {
         return;
       }
 
-      // Load all images first
-      const loadImg = (src: string) =>
-        new Promise<HTMLImageElement>((resolve, reject) => {
+      // Load all images first — use fetch for remote URLs to avoid
+      // CORS-cache mismatch (images already cached without crossOrigin)
+      const loadImg = async (src: string): Promise<HTMLImageElement> => {
+        let objectUrl: string | undefined;
+        if (!src.startsWith("data:")) {
+          const resp = await fetch(src, { mode: "cors" });
+          const blob = await resp.blob();
+          objectUrl = URL.createObjectURL(blob);
+        }
+        return new Promise<HTMLImageElement>((resolve, reject) => {
           const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.onload = () => resolve(img);
-          img.onerror = reject;
-          img.src = src;
+          img.onload = () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            resolve(img);
+          };
+          img.onerror = () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            reject(new Error("Image load failed"));
+          };
+          img.src = objectUrl ?? src;
         });
+      };
 
       const loaded = await Promise.all(
         filledDays.map(async ({ entry, dayIndex }) => ({
