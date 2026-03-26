@@ -907,8 +907,10 @@ export default function MyPagesPage() {
       link.click();
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch {
-      alert("Could not generate image. Try taking a screenshot instead.");
+    } catch (err) {
+      console.error("Save image failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Could not generate image: ${msg}`);
     } finally {
       setSaving(false);
     }
