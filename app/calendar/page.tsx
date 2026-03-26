@@ -529,19 +529,16 @@ const deckledEdgeRight = `polygon(
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const polaroidLayouts = [
-  { col: 0, rotate: -3, xOff: 4, yOff: 0 },
-  { col: 1, rotate: 2.2, xOff: -2, yOff: 8 },
-  { col: 0, rotate: 1.5, xOff: -6, yOff: 0 },
-  { col: 1, rotate: -2, xOff: 6, yOff: 4 },
-  { col: 0, rotate: -1.2, xOff: 8, yOff: 0 },
-  { col: 1, rotate: 2.8, xOff: -4, yOff: 10 },
-  { col: 0, rotate: -2.5, xOff: 2, yOff: 0 },
+  { rotate: -2.5, xOff: 2, yOff: 0 },
+  { rotate: 1.8, xOff: -2, yOff: 3 },
+  { rotate: -1.2, xOff: 1, yOff: 0 },
+  { rotate: 2.0, xOff: -3, yOff: 3 },
+  { rotate: -1.5, xOff: 3, yOff: 0 },
+  { rotate: 1.5, xOff: -1, yOff: 3 },
+  { rotate: -2.0, xOff: 2, yOff: 0 },
 ];
 
 function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: string, caption: string) => void }) {
-  const col0 = week.days.map((entry, i) => ({ entry, i })).filter((_, idx) => polaroidLayouts[idx].col === 0);
-  const col1 = week.days.map((entry, i) => ({ entry, i })).filter((_, idx) => polaroidLayouts[idx].col === 1);
-
   function renderSlot(entry: MealEntry | null, dayIndex: number) {
     const layout = polaroidLayouts[dayIndex];
     const d = new Date(week.weekStart);
@@ -558,7 +555,7 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
       return (
         <div className="group block">
           <div
-            className="relative rounded-[14px] bg-white p-[6px] pb-8 transition-transform duration-200 group-hover:scale-[1.04] group-hover:z-10"
+            className="relative rounded-[12px] bg-white p-[4px] pb-[22px] transition-transform duration-200 group-hover:scale-[1.04] group-hover:z-10"
             style={{
               rotate: `${layout.rotate}deg`,
               translate: `${layout.xOff}px ${layout.yOff}px`,
@@ -570,32 +567,32 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
 
             <button
               type="button"
-              className="relative w-full overflow-hidden rounded-[10px]"
+              className="relative w-full overflow-hidden rounded-[8px]"
               onClick={() => onImageTap?.(imgSrc, caption)}
             >
               <img
                 src={imgSrc}
                 alt={entry.mood ? `${entry.mood} meal` : "Meal"}
-                className="block aspect-[4/5] w-full object-cover"
+                className="block aspect-square w-full object-cover"
               />
             </button>
 
-            <Link href={`/entry/${entry.id}`} className="mt-1.5 block px-1">
-              <p className="text-[10px] font-bold tracking-[0.18em] text-cocoa/60">
+            <Link href={`/entry/${entry.id}`} className="mt-1 block px-0.5">
+              <p className="text-[9px] font-bold tracking-[0.15em] text-cocoa/60">
                 {dayLabels[dayIndex]} {dayNum}
               </p>
-              <p className="mt-0.5 truncate text-[12px] text-ink">
+              <p className="truncate text-[10px] text-ink">
                 {caption.toLowerCase()}
               </p>
             </Link>
 
             {showSticker && (
               <span
-                className="pointer-events-none absolute text-base"
+                className="pointer-events-none absolute text-sm"
                 style={{
-                  bottom: "-6px",
-                  right: s % 3 === 0 ? "-6px" : undefined,
-                  left: s % 3 !== 0 ? "-6px" : undefined,
+                  bottom: "-5px",
+                  right: s % 3 === 0 ? "-5px" : undefined,
+                  left: s % 3 !== 0 ? "-5px" : undefined,
                 }}
               >
                 {pickSticker(entry.id)}
@@ -618,7 +615,7 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
         }}
       >
         <div
-          className="relative overflow-hidden p-3 pb-7"
+          className="relative overflow-hidden p-2 pb-5"
           style={{
             background: "linear-gradient(170deg, #FFF9F0 0%, #FFF3E4 50%, #FFEDD8 100%)",
             clipPath: deckledCard,
@@ -635,14 +632,6 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
               strokeLinejoin="round"
               opacity="0.45"
             />
-            <path
-              d="M14 14 C11 11, 18 9, 24 10 L136 12 C142 10, 148 14, 146 18 L144 170 C145 176, 140 179, 134 178 L22 176 C16 178, 12 174, 14 168 Z"
-              stroke="#C4A882"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.25"
-            />
           </svg>
 
           {/* Paper grain */}
@@ -653,26 +642,15 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
             }}
           />
 
-          {/* Sketched illustration + stars inside */}
-          <div className="flex aspect-[4/5] flex-col items-center justify-center">
-            {(() => { const Illust = slotIllustrations[dayIndex]; return <Illust className="h-14 w-14" />; })()}
-            <SketchStar
-              className="absolute h-5 w-5"
-              style={{ top: "10%", right: "12%", rotate: "12deg" }}
-            />
-            <SketchStar
-              className="absolute h-4 w-4"
-              style={{ bottom: "26%", left: "8%", rotate: "-18deg" }}
-            />
+          {/* Sketched illustration */}
+          <div className="flex aspect-square flex-col items-center justify-center">
+            {(() => { const Illust = slotIllustrations[dayIndex]; return <Illust className="h-10 w-10" />; })()}
           </div>
 
-          {/* Day label + text */}
-          <div className="mt-1 px-0.5">
-            <p className="text-[10px] font-bold tracking-[0.18em] text-cocoa/70">
+          {/* Day label */}
+          <div className="mt-0.5 px-0.5">
+            <p className="text-[9px] font-bold tracking-[0.15em] text-cocoa/70">
               {dayLabels[dayIndex]} {dayNum}
-            </p>
-            <p className="mt-0.5 text-[10px] italic tracking-[0.12em] text-cocoa/45">
-              waiting for art
             </p>
           </div>
         </div>
@@ -701,51 +679,31 @@ function WeekSpread({ week, onImageTap }: { week: WeekGroup; onImageTap?: (src: 
         />
 
         {/* Binding stitch dots */}
-        <div className="absolute bottom-4 left-1 top-4 flex flex-col justify-between">
-          {Array.from({ length: 12 }, (_, i) => (
+        <div className="absolute bottom-3 left-1 top-3 flex flex-col justify-between">
+          {Array.from({ length: 8 }, (_, i) => (
             <div key={i} className="h-1 w-1 rounded-full bg-[#C4A882]/30" />
           ))}
         </div>
 
-        {/* Scattered stars */}
-        <ScatteredStars />
-
-        <div className="relative px-5 py-6">
+        <div className="relative px-3 py-3">
           {/* Week header */}
-          <p className="mb-4 text-center text-xs font-bold tracking-[0.2em] text-cocoa/60">
+          <p className="mb-2 text-center text-xs font-bold tracking-[0.2em] text-cocoa/60">
             {formatWeekRange(week.weekStart)}
           </p>
 
-          {/* Scattered 2-column polaroid layout */}
-          <div className="relative flex gap-3">
-            <div className="flex flex-1 flex-col gap-4">
-              {col0.map(({ entry, i }) => (
-                <div key={i}>{renderSlot(entry, i)}</div>
-              ))}
+          {/* 3-column grid */}
+          <div className="grid grid-cols-3 gap-2">
+            {week.days.map((entry, i) => (
+              <div key={i}>{renderSlot(entry, i)}</div>
+            ))}
+            {/* 8th slot: dogavacado filler */}
+            <div className="overflow-hidden rounded-[10px]">
+              <img
+                src="/dogavacado.png"
+                alt=""
+                className="aspect-square w-full object-cover opacity-[0.35]"
+              />
             </div>
-
-            <div className="flex flex-1 flex-col gap-4 pt-8">
-              {col1.map(({ entry, i }) => (
-                <div key={i}>{renderSlot(entry, i)}</div>
-              ))}
-              {/* Dogavacado filling empty slot next to Sat */}
-              <div className="overflow-hidden rounded-[14px]">
-                <img
-                  src="/dogavacado.png"
-                  alt=""
-                  className="aspect-[4/5] w-full object-cover opacity-[0.35]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Hero illustration as center decoration */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <img
-              src="/sun-drink.png"
-              alt=""
-              className="h-64 w-64 object-contain opacity-[0.35] saturate-50"
-            />
           </div>
         </div>
       </div>
