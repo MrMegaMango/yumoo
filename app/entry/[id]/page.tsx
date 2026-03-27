@@ -86,7 +86,7 @@ export default function EntryDetailPage({
             disabled={currentEntry.art.status === "queued"}
           >
             {currentEntry.art.status === "queued"
-              ? "Generating art..."
+              ? <span className="dot-animation">Generating art<span>.</span><span>.</span><span>.</span></span>
               : currentEntry.art.status === "failed"
                 ? "Retry art"
                 : "Regenerate art"}

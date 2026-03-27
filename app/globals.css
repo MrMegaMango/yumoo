@@ -63,3 +63,42 @@ a {
   }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+
+.art-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 40%,
+    rgba(255, 255, 255, 0.35) 60%,
+    transparent 100%
+  );
+  animation: shimmer 2.4s ease-in-out infinite;
+}
+
+.art-generating-bg {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+.dot-animation span {
+  animation: dot-bounce 1.4s ease-in-out infinite;
+}
+.dot-animation span:nth-child(2) { animation-delay: 0.2s; }
+.dot-animation span:nth-child(3) { animation-delay: 0.4s; }
+

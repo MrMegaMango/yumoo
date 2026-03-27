@@ -1,8 +1,16 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { paletteBackground } from "@/lib/art";
 import type { MealEntry } from "@/lib/types";
 import { cx, Tag } from "@/components/ui";
+
+function AnimatedDots() {
+  return (
+    <span className="dot-animation" aria-hidden>
+      <span>.</span><span>.</span><span>.</span>
+    </span>
+  );
+}
 
 const sizeClasses = {
   sm: "h-16 rounded-[18px]",
@@ -29,14 +37,16 @@ export function ArtTile({
   const outOfCredits =
     entry.art.status === "failed" &&
     entry.art.error?.toLowerCase().includes("credits");
-  const statusLabel =
+  const isGenerating =
+    entry.art.status !== "ready" && entry.art.status !== "failed";
+  const statusLabel: ReactNode =
     entry.art.status === "ready"
       ? "Art ready"
       : entry.art.status === "failed"
         ? outOfCredits
           ? "No credits left"
           : "Retry art"
-        : "Generating art";
+        : <>Generating art<AnimatedDots /></>;
   const captionTextColor = artImageUrl ? "text-white" : "text-ink";
 
   return (
@@ -44,6 +54,7 @@ export function ArtTile({
       className={cx(
         "relative overflow-hidden border border-white/80 shadow-card",
         sizeClasses[size],
+        isGenerating && "art-shimmer art-generating-bg",
         className
       )}
       style={artImageUrl ? undefined : backgroundStyle}
