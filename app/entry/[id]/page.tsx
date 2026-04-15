@@ -49,7 +49,7 @@ export default function EntryDetailPage({
     }
 
     deleteEntry(currentEntry.id);
-    router.push("/calendar");
+    router.push("/scrapbook");
   }
 
   return (

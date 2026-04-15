@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
           )}
           <div className="flex gap-3">
             <a
-              href="/calendar"
+              href="/scrapbook"
               className="rounded-full bg-white/90 px-6 py-2 text-sm font-semibold text-ink ring-1 ring-[#EAD6C7]"
             >
               My Pages

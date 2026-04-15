@@ -54,7 +54,7 @@ export default function GlobalError({
           ) : null}
           <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
             <a
-              href="/calendar"
+              href="/scrapbook"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

@@ -372,7 +372,7 @@ export function EntryForm({
         <Button className="flex-1" type="submit" disabled={isPending}>
           {isPending ? "Logging the vibe..." : mode === "create" ? "Drop it in 🍽️" : "Update the vibe"}
         </Button>
-        <Link href={existingEntry ? `/day/${existingEntry.localDate}` : "/calendar"} className={buttonClasses("secondary")}>
+        <Link href={existingEntry ? `/day/${existingEntry.localDate}` : "/scrapbook"} className={buttonClasses("secondary")}>
           Cancel
         </Link>
       </div>

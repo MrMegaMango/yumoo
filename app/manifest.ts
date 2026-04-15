@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Yumoo",
     short_name: "Yumoo",
     description: "A cute visual food diary that turns your month into a soft little recap.",
-    start_url: "/calendar",
+    start_url: "/scrapbook",
     display: "standalone",
     orientation: "portrait",
     background_color: "#FFF8F2",

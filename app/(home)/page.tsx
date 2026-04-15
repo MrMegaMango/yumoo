@@ -47,7 +47,7 @@ export default function LandingPage() {
             <p className="text-center text-[13px] leading-6 text-cocoa">
               Welcome back — your scrapbook awaits
             </p>
-            <Link href="/calendar" className={buttonClasses("primary", "w-full")}>
+            <Link href="/scrapbook" className={buttonClasses("primary", "w-full")}>
               Open My Scrapbook
             </Link>
             <Link href="/entry/new" className={buttonClasses("secondary", "w-full")}>
