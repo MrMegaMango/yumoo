@@ -158,6 +158,7 @@ export default function StacksPage() {
     <AppShell
       title="Monthly Stacks"
       subtitle="Your year in meals, month by month."
+      showFab={false}
       showInstallBanner={false}
       headerTrailing={
         <div className="relative" style={{ rotate: "8deg" }}>
